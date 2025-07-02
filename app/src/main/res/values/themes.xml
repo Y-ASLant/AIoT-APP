@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.AIOT_Compose" parent="android:Theme.Material.Light.NoActionBar">
+        <!--        TODO:全屏显示-->
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:ignore="NewApi">shortEdges</item>
+        <!--        <item name="android:windowFullscreen">true</item>-->
+        
+        <!-- 启用 SplashScreen API -->
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/data</item>
+        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="s">@android:color/white</item>
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">@drawable/data</item>
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.AIOT_Compose.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.AIOT_Compose</item>
+    </style>
+
+</resources>

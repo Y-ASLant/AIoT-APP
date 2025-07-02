@@ -1,0 +1,16 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+.idea/
+.vscode/
+.git/
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.kotlin/
+.gradle/
+.gradle/
+.gradle/
+.gradle/
+.gradle/
