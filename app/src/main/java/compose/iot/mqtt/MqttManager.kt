@@ -84,9 +84,7 @@ class MqttManager() {
                                     val messageStr = String(payload, StandardCharsets.UTF_8)
                                     topic?.let { subscriptionCallbacks[it] }?.let { callback ->
                                         ioScope.launch {
-                                            withContext(Dispatchers.Main) {
-                                                callback(messageStr)
-                                            }
+                                            callback(messageStr)
                                         }
                                     }
                                 }
@@ -162,9 +160,7 @@ class MqttManager() {
         mqttClient?.subscribe(topic, 0) { _, message ->
             val messageStr = String(message.payload, StandardCharsets.UTF_8)
             ioScope.launch {
-                withContext(Dispatchers.Main) {
-                    onMessageReceived(messageStr)
-                }
+                onMessageReceived(messageStr)
             }
         }
         subscriptionCallbacks[topic] = onMessageReceived

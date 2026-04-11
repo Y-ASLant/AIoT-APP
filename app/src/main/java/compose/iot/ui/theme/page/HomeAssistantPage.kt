@@ -1,7 +1,6 @@
 package compose.iot.ui.theme.page
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -14,12 +13,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,10 +49,11 @@ data class HADevice(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Page_HomeAssistant(navController: NavController) {
+fun HomeAssistantPage(navController: NavController) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("homeassistant_config", Context.MODE_PRIVATE)
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // 添加焦点管理器
     val focusManager = LocalFocusManager.current
@@ -89,7 +91,7 @@ fun Page_HomeAssistant(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Home Assistant 配置") },
+                title = { Text("Home Assistant 配置", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = {
                         focusManager.clearFocus() // 返回时清除焦点
@@ -98,6 +100,11 @@ fun Page_HomeAssistant(navController: NavController) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 actions = {
                     if (showDeviceList) {
                         IconButton(
@@ -116,6 +123,7 @@ fun Page_HomeAssistant(navController: NavController) {
                 },
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { paddingValues ->
         AnimatedVisibility(
             visible = isVisible,
@@ -129,39 +137,45 @@ fun Page_HomeAssistant(navController: NavController) {
                         Modifier
                             .fillMaxSize()
                             .padding(paddingValues)
-                            .padding(12.dp) // 减小外边距
+                            .padding(horizontal = 24.dp)
                             .verticalScroll(rememberScrollState())
                             .pointerInput(Unit) {
                                 detectTapGestures(onTap = {
-                                    focusManager.clearFocus() // 点击空白处清除焦点
+                                    focusManager.clearFocus()
                                 })
                             },
-                    verticalArrangement = Arrangement.spacedBy(10.dp), // 减小项目间距
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "网关详情",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+                    )
+
                     OutlinedTextField(
                         value = serverUrl,
                         onValueChange = { serverUrl = it },
                         label = { Text("服务器地址") },
                         placeholder = { Text("例如: http://homeassistant.local:8123") },
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                        // 减小输入框高度
-                        textStyle = MaterialTheme.typography.bodyMedium, // 使用较小的字体
+                        leadingIcon = { Icon(Icons.Rounded.Home, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.small,
                     )
 
                     OutlinedTextField(
                         value = accessToken,
                         onValueChange = { accessToken = it },
-                        label = { Text("长期访问令牌") },
+                        label = { Text("长期访问令牌 (Token)") },
                         visualTransformation = PasswordVisualTransformation(),
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                        // 减小输入框高度
-                        textStyle = MaterialTheme.typography.bodyMedium, // 使用较小的字体
+                        leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.small,
                     )
 
                     OutlinedTextField(
@@ -173,29 +187,32 @@ fun Page_HomeAssistant(navController: NavController) {
                         },
                         label = { Text("轮询间隔（秒）") },
                         placeholder = { Text("默认为5秒") },
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                        // 减小输入框高度
-                        textStyle = MaterialTheme.typography.bodyMedium, // 使用较小的字体
+                        leadingIcon = { Icon(Icons.Rounded.Info, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        shape = MaterialTheme.shapes.small,
                     )
 
                     Text(
-                        text = "提示：轮询间隔决定了设备状态更新的频率，建议设置在3-30秒之间",
-                        style = MaterialTheme.typography.bodySmall, // 使用更小的字体
+                        text = "轮询间隔决定了设备状态更新的频率，建议设置在3-30秒之间",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp),
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = {
                             if (serverUrl.isBlank() || accessToken.isBlank() || pollingInterval.isBlank()) {
-                                Toast.makeText(context, "请填写所有必填项", Toast.LENGTH_SHORT).show()
+                                scope.launch { snackbarHostState.showSnackbar("请填写所有必填项", duration = SnackbarDuration.Short) }
                                 return@Button
                             }
 
                             val intervalValue = pollingInterval.toIntOrNull()
                             if (intervalValue == null || intervalValue < 1) {
-                                Toast.makeText(context, "轮询间隔必须是大于0的整数", Toast.LENGTH_SHORT).show()
+                                scope.launch { snackbarHostState.showSnackbar("轮询间隔必须是大于0的整数", duration = SnackbarDuration.Short) }
                                 return@Button
                             }
 
@@ -218,9 +235,9 @@ fun Page_HomeAssistant(navController: NavController) {
                                         showDeviceList = true
                                     }
 
-                                    Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show()
+                                    scope.launch { snackbarHostState.showSnackbar("连接成功", duration = SnackbarDuration.Short) }
                                 } else {
-                                    Toast.makeText(context, "连接失败，请检查配置", Toast.LENGTH_SHORT).show()
+                                    scope.launch { snackbarHostState.showSnackbar("连接失败，请检查配置", duration = SnackbarDuration.Short) }
                                 }
                                 isLoading = false
                             }
@@ -228,17 +245,28 @@ fun Page_HomeAssistant(navController: NavController) {
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(48.dp),
-                        // 减小按钮高度
+                                .height(56.dp),
                         enabled = !isLoading,
+                        shape = MaterialTheme.shapes.extraLarge,
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp), // 减小进度指示器尺寸
+                                modifier = Modifier.size(24.dp),
                                 color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp,
                             )
                         } else {
-                            Text("连接并获取设备")
+                            Icon(
+                                imageVector = Icons.Rounded.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                "连接并获取设备",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
                         }
                     }
                 }
@@ -268,16 +296,19 @@ fun Page_HomeAssistant(navController: NavController) {
                         placeholder = {
                             Text(
                                 "搜索设备...",
-                                style = MaterialTheme.typography.bodyMedium, // 使用较小的字体
+                                // 使用较小的字体
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         },
-                        textStyle = MaterialTheme.typography.bodyMedium, // 使用较小的字体
+                        // 使用较小的字体
+                        textStyle = MaterialTheme.typography.bodyMedium,
                         singleLine = true,
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Search,
                                 contentDescription = "搜索",
-                                modifier = Modifier.size(20.dp), // 减小图标尺寸
+                                // 减小图标尺寸
+                                modifier = Modifier.size(20.dp),
                             )
                         },
                         trailingIcon = {
@@ -287,12 +318,14 @@ fun Page_HomeAssistant(navController: NavController) {
                                         searchQuery = ""
                                         focusManager.clearFocus() // 清除文本时也清除焦点
                                     },
-                                    modifier = Modifier.size(40.dp), // 减小按钮尺寸
+                                    // 减小按钮尺寸
+                                    modifier = Modifier.size(40.dp),
                                 ) {
                                     Icon(
                                         Icons.Default.Clear,
                                         contentDescription = "清除",
-                                        modifier = Modifier.size(18.dp), // 减小图标尺寸
+                                        // 减小图标尺寸
+                                        modifier = Modifier.size(18.dp),
                                     )
                                 }
                             }
@@ -330,9 +363,13 @@ fun Page_HomeAssistant(navController: NavController) {
                                         focusManager.clearFocus()
                                     }
                                 },
-                        verticalArrangement = Arrangement.spacedBy(6.dp), // 减小项目间距
+                        // 减小项目间距
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        items(filteredDevices) { device ->
+                        items(
+                            items = filteredDevices,
+                            key = { device -> device.entityId },
+                        ) { device ->
                             Card(
                                 modifier =
                                     Modifier
@@ -343,7 +380,8 @@ fun Page_HomeAssistant(navController: NavController) {
                                     // 添加设备到监控列表
                                     val card =
                                         SubscriptionCard(
-                                            topic = "homeassistant/${device.entityId}/state", // 添加正确的topic前缀和后缀
+                                            // 添加正确的topic前缀和后缀
+                                            topic = "homeassistant/${device.entityId}/state",
                                             displayName = device.friendlyName,
                                             jsonParam = "state",
                                             cardStyle = CardStyle.MINIMAL,
@@ -369,7 +407,8 @@ fun Page_HomeAssistant(navController: NavController) {
                                                     "humidity" -> "%"
                                                     else -> ""
                                                 },
-                                            isButtonStyle = device.entityId.startsWith("switch.") || device.entityId.startsWith("light."), // 将light也设为按钮样式
+                                            // 将light也设为按钮样式
+                                            isButtonStyle = device.entityId.startsWith("switch.") || device.entityId.startsWith("light."),
                                             isSliderStyle =
                                                 device.entityId.startsWith(
                                                     "number.",
@@ -380,7 +419,8 @@ fun Page_HomeAssistant(navController: NavController) {
                                                     "button.",
                                                 ),
                                             // 如果 ID 以 "button." 开头，则为按钮样式
-                                            buttonValue = "1", // 默认按钮值
+                                            // 默认按钮值
+                                            buttonValue = "1",
                                         )
 
                                     // 从SharedPreferences加载现有卡片
@@ -431,7 +471,7 @@ fun Page_HomeAssistant(navController: NavController) {
 
                                     // 检查是否已经添加过
                                     if (existingCards.any { it.topic == card.topic }) {
-                                        Toast.makeText(context, "该设备已添加", Toast.LENGTH_SHORT).show()
+                                        scope.launch { snackbarHostState.showSnackbar("该设备已添加", duration = SnackbarDuration.Short) }
                                         return@Card
                                     }
 
@@ -506,7 +546,7 @@ fun Page_HomeAssistant(navController: NavController) {
                                         }
                                     }
 
-                                    Toast.makeText(context, "已添加设备：${device.friendlyName}", Toast.LENGTH_SHORT).show()
+                                    scope.launch { snackbarHostState.showSnackbar("已添加设备：${device.friendlyName}", duration = SnackbarDuration.Short) }
                                     // 不再自动返回首页
                                     // navController.navigateUp()
                                 },
@@ -517,11 +557,13 @@ fun Page_HomeAssistant(navController: NavController) {
                                             .fillMaxWidth()
                                             .padding(6.dp),
                                     // 减小内边距
-                                    verticalArrangement = Arrangement.spacedBy(1.dp), // 减小项目间距
+                                    // 减小项目间距
+                                    verticalArrangement = Arrangement.spacedBy(1.dp),
                                 ) {
                                     Text(
                                         text = device.friendlyName,
-                                        style = MaterialTheme.typography.titleSmall, // 使用更小的标题字体
+                                        // 使用更小的标题字体
+                                        style = MaterialTheme.typography.titleSmall,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )

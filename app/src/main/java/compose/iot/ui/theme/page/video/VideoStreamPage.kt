@@ -7,13 +7,14 @@ import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Page_VideoStream(navController: NavController) {
+fun VideoStreamPage(navController: NavController) {
     val context = LocalContext.current
     val sharedPreferences =
         remember {
@@ -73,12 +74,17 @@ fun Page_VideoStream(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("视频流配置") },
+                title = { Text("视频流配置", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
             )
         },
     ) { padding ->
@@ -103,96 +109,151 @@ fun Page_VideoStream(navController: NavController) {
                 )
             } else {
                 // 配置部分
-                // 协议选择开关
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "网络连接",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+                )
+
+                // 协议选择开关 Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    shape = MaterialTheme.shapes.small,
+                ) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "WebSocket协议",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                text = if (isSecure) "使用 WSS 安全连接" else "使用 WS 标准网络传输",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = isSecure,
+                            onCheckedChange = { isSecure = it },
+                        )
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Text(
-                        text = "WebSocket协议:",
-                        modifier = Modifier.weight(1f),
+                    // 服务器地址
+                    OutlinedTextField(
+                        value = serverUrl,
+                        onValueChange = {
+                            serverUrl = it
+                            isUrlTested = false
+                        },
+                        label = { Text("服务器地址 / IP") },
+                        placeholder = { Text("例如: example.com") },
+                        leadingIcon = { Icon(Icons.Rounded.Home, contentDescription = null) },
+                        modifier = Modifier.weight(0.7f),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.small,
                     )
-                    Switch(
-                        checked = isSecure,
-                        onCheckedChange = { isSecure = it },
-                    )
-                    Text(
-                        text = if (isSecure) "WSS (安全)" else "WS (标准)",
-                        modifier = Modifier.padding(start = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium,
+                    // 端口
+                    OutlinedTextField(
+                        value = port,
+                        onValueChange = {
+                            port = it
+                            isUrlTested = false
+                        },
+                        label = { Text("端口") },
+                        placeholder = { Text("例如: 8080") },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.weight(0.3f),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.small,
                     )
                 }
 
-                // 服务器地址输入
-                OutlinedTextField(
-                    value = serverUrl,
-                    onValueChange = {
-                        serverUrl = it
-                        isUrlTested = false
-                    },
-                    label = { Text("服务器地址") },
-                    placeholder = { Text("例如: example.com") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-
-                // 端口输入
-                OutlinedTextField(
-                    value = port,
-                    onValueChange = {
-                        port = it
-                        isUrlTested = false
-                    },
-                    label = { Text("端口") },
-                    placeholder = { Text("例如: 8080") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-
-                // 路径输入
+                // 路径
                 OutlinedTextField(
                     value = path,
                     onValueChange = {
                         path = it
                         isUrlTested = false
                     },
-                    label = { Text("路径(可选)") },
+                    label = { Text("请求路径 (可选)") },
                     placeholder = { Text("例如: /stream") },
+                    leadingIcon = { Icon(Icons.Rounded.Info, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    shape = MaterialTheme.shapes.small,
                 )
 
-                // 可选的认证信息
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = {
-                        username = it
-                        isUrlTested = false
-                    },
-                    label = { Text("用户名 (可选)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                Text(
+                    text = "访问凭证",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp),
                 )
 
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        isUrlTested = false
-                    },
-                    label = { Text("密码 (可选)") },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                )
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    // 用户名
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = {
+                            username = it
+                            isUrlTested = false
+                        },
+                        label = { Text("用户名 (可选)") },
+                        leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                        modifier = Modifier.weight(0.5f),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.small,
+                    )
+                    // 密码
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            isUrlTested = false
+                        },
+                        label = { Text("密码 (可选)") },
+                        leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.weight(0.5f),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.small,
+                    )
+                }
 
                 // 显示完整的WebSocket URL预览
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.small,
                     colors =
                         CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         ),
                 ) {
                     Column(
@@ -203,8 +264,7 @@ fun Page_VideoStream(navController: NavController) {
                     ) {
                         Text(
                             text = "WebSocket URL 预览:",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.titleSmall,
                         )
                         Text(
                             text = fullWebSocketUrl,
@@ -227,7 +287,7 @@ fun Page_VideoStream(navController: NavController) {
                 } else if (isUrlTested) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = MaterialTheme.shapes.small,
                         colors =
                             CardDefaults.cardColors(
                                 containerColor =
@@ -323,18 +383,24 @@ fun Page_VideoStream(navController: NavController) {
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).height(56.dp),
                         enabled = !isTestingConnection,
+                        shape = MaterialTheme.shapes.extraLarge,
                     ) {
-                        Text("测试连接")
+                        Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("测试连接", fontWeight = FontWeight.Bold)
                     }
 
                     if (isConnectionSuccessful) {
                         Button(
                             onClick = { isStreamingActive = true },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).height(56.dp),
+                            shape = MaterialTheme.shapes.extraLarge,
                         ) {
-                            Text("开始接收流")
+                            Icon(imageVector = Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("开始接收", fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Button(
@@ -351,9 +417,12 @@ fun Page_VideoStream(navController: NavController) {
                                 }
                                 navController.navigateUp()
                             },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).height(56.dp),
+                            shape = MaterialTheme.shapes.extraLarge,
                         ) {
-                            Text("保存配置")
+                            Icon(imageVector = Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("保存配置", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -367,7 +436,7 @@ fun VideoStreamView(
     websocketUrl: String,
     onError: (String) -> Unit,
 ) {
-    val TAG = "VideoStreamView"
+    val tag = "VideoStreamView"
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var lastMessage by remember { mutableStateOf("") }
     var messageCount by remember { mutableIntStateOf(0) }
@@ -540,7 +609,7 @@ fun VideoStreamView(
                         .padding(16.dp)
                         .background(
                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = MaterialTheme.shapes.small,
                         )
                         .padding(8.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -572,7 +641,7 @@ fun VideoStreamView(
                                     .padding(horizontal = 16.dp)
                                     .background(
                                         MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = RoundedCornerShape(4.dp),
+                                        shape = MaterialTheme.shapes.extraSmall,
                                     )
                                     .padding(8.dp),
                         )
@@ -589,7 +658,7 @@ fun VideoStreamView(
                                     .padding(horizontal = 16.dp)
                                     .background(
                                         MaterialTheme.colorScheme.errorContainer,
-                                        shape = RoundedCornerShape(4.dp),
+                                        shape = MaterialTheme.shapes.extraSmall,
                                     )
                                     .padding(8.dp),
                         )
@@ -612,7 +681,7 @@ fun VideoStreamView(
                     .size(48.dp)
                     .background(
                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = CircleShape,
                     ),
         ) {
             Icon(
@@ -635,7 +704,7 @@ fun VideoStreamView(
                     .size(48.dp)
                     .background(
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = CircleShape,
                     ),
         ) {
             Icon(

@@ -52,45 +52,43 @@ fun MqttSubscribeDialog(
             ) {
                 // 服务类型选择
                 Text("服务类型", style = MaterialTheme.typography.labelMedium)
-                Row(
+                SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ServerType.entries.forEach { type ->
-                        FilterChip(
+                    ServerType.entries.forEachIndexed { index, type ->
+                        SegmentedButton(
                             selected = serverType == type,
                             onClick = { serverType = type },
-                            label = {
-                                Text(
-                                    when (type) {
-                                        ServerType.EMQX -> "EMQX"
-                                        ServerType.HomeAssistant -> "Home Assistant"
-                                    },
-                                )
-                            },
-                        )
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = ServerType.entries.size),
+                        ) {
+                            Text(
+                                when (type) {
+                                    ServerType.EMQX -> "EMQX"
+                                    ServerType.HomeAssistant -> "HomeAssistant"
+                                },
+                            )
+                        }
                     }
                 }
 
                 // 设备类型选择
                 Text("设备类型", style = MaterialTheme.typography.labelMedium)
-                Row(
+                SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    DeviceType.entries.forEach { type ->
-                        FilterChip(
+                    DeviceType.entries.forEachIndexed { index, type ->
+                        SegmentedButton(
                             selected = deviceType == type,
                             onClick = { deviceType = type },
-                            label = {
-                                Text(
-                                    when (type) {
-                                        DeviceType.SENSOR -> "传感器"
-                                        DeviceType.ACTUATOR -> "执行器"
-                                    },
-                                )
-                            },
-                        )
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = DeviceType.entries.size),
+                        ) {
+                            Text(
+                                when (type) {
+                                    DeviceType.SENSOR -> "传感器"
+                                    DeviceType.ACTUATOR -> "执行器"
+                                },
+                            )
+                        }
                     }
                 }
 
@@ -249,24 +247,23 @@ fun MqttSubscribeDialog(
 
                 // 卡片样式选择
                 Text("卡片样式", style = MaterialTheme.typography.labelMedium)
-                Row(
+                SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    CardStyle.entries.forEach { style ->
-                        FilterChip(
+                    CardStyle.entries.forEachIndexed { index, style ->
+                        SegmentedButton(
                             selected = cardStyle == style,
                             onClick = { cardStyle = style },
-                            label = {
-                                Text(
-                                    when (style) {
-                                        CardStyle.HIGHLIGHT -> "高亮"
-                                        CardStyle.MINIMAL -> "简约"
-                                        CardStyle.FILLED -> "填充"
-                                    },
-                                )
-                            },
-                        )
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = CardStyle.entries.size),
+                        ) {
+                            Text(
+                                when (style) {
+                                    CardStyle.HIGHLIGHT -> "高亮"
+                                    CardStyle.MINIMAL -> "简约"
+                                    CardStyle.FILLED -> "填充"
+                                },
+                            )
+                        }
                     }
                 }
 

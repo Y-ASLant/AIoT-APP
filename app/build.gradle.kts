@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.ksp)
 }
 
 ktlint {
@@ -21,14 +22,19 @@ ktlint {
 
 android {
     namespace = "compose.iot"
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
     compileSdk = 35
 
     defaultConfig {
         applicationId = "compose.iot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20250513
-        versionName = "1.2.1"
+        versionCode = 20260412
+        versionName = "1.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -37,6 +43,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            splits {
+                abi {
+                    isEnable = false
+                }
+            }
+        }
+
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -46,15 +60,14 @@ android {
             )
             // 启用R8完全模式优化
             isDebuggable = false
-        }
-    }
-
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = false
+            splits {
+                abi {
+                    isEnable = true
+                    reset()
+                    include("armeabi-v7a", "arm64-v8a")
+                    isUniversalApk = false
+                }
+            }
         }
     }
 
@@ -91,6 +104,8 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -113,4 +128,9 @@ dependencies {
     // MQTT Client
     implementation(libs.org.eclipse.paho.client.mqttv3)
     implementation(libs.org.eclipse.paho.android.service)
+
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 }

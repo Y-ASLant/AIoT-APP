@@ -4,11 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialog
@@ -18,9 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import compose.iot.R
@@ -36,7 +32,7 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 @Composable
-fun Page_About(navController: NavController) {
+fun AboutPage(navController: NavController) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val isVisible by remember { mutableStateOf(true) }
@@ -45,6 +41,7 @@ fun Page_About(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var updateMessage by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val packageInfo =
         remember {
@@ -75,12 +72,16 @@ fun Page_About(navController: NavController) {
             }
         }
 
-    val currentVersionName = packageInfo?.versionName ?: "1.2.0"
+    val currentVersionName = packageInfo?.versionName ?: "1.5.0"
 
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
     ) {
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
         AnimatedVisibility(
             visible = isVisible,
             enter = standardEnterTransition(initialOffsetY = -50),
@@ -99,13 +100,12 @@ fun Page_About(navController: NavController) {
                 // 应用标题
                 Text(
                     text = "AIOT Compose",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
                     text = "物联网数据监控平台",
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
                 )
@@ -116,7 +116,7 @@ fun Page_About(navController: NavController) {
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.small,
                     colors =
                         CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
@@ -147,7 +147,7 @@ fun Page_About(navController: NavController) {
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.small,
                     colors =
                         CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -220,83 +220,87 @@ fun Page_About(navController: NavController) {
                     }
                 }
 
-                // 版本信息
+                // 版本信息卡片
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                Card(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                    shape = MaterialTheme.shapes.small,
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
                 ) {
-                    Text(
-                        text = "AIOT Version $currentVersionName",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "更新日期: $versionCode",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "© ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)} ASLant",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = "AIOT Version $currentVersionName",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "更新日期: $versionCode · © ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)} ASLant",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = {
-                            if (!isCheckingUpdate) {
-                                isCheckingUpdate = true
-                                // 检查网络连接
-                                if (!isNetworkAvailable(context)) {
-                                    updateMessage = "网络连接不可用，请检查网络设置"
-                                    isCheckingUpdate = false
-                                    return@Button
-                                }
-
-                                coroutineScope.launch {
-                                    try {
-                                        Timber.d("开始检查更新，当前版本: $currentVersionName")
-                                        val result = checkForUpdates(currentVersionName, currentVersionCode)
-                                        if (result != null) {
-                                            Timber.d("发现新版本: ${result.versionName}")
-                                            updateInfo = result
-                                            showUpdateDialog = true
-                                        } else {
-                                            Timber.d("没有发现新版本")
-                                            updateMessage = "已是最新版本"
-                                        }
-                                    } catch (e: Exception) {
-                                        Timber.e(e, "检查更新失败")
-                                        updateMessage = "检查更新失败: ${e.message ?: "未知错误"}"
-                                    } finally {
+                        FilledTonalButton(
+                            onClick = {
+                                if (!isCheckingUpdate) {
+                                    isCheckingUpdate = true
+                                    if (!isNetworkAvailable(context)) {
+                                        updateMessage = "网络连接不可用，请检查网络设置"
                                         isCheckingUpdate = false
+                                        return@FilledTonalButton
+                                    }
+
+                                    coroutineScope.launch {
+                                        try {
+                                            Timber.d("开始检查更新，当前版本: $currentVersionName")
+                                            val result = checkForUpdates(currentVersionName, currentVersionCode)
+                                            if (result != null) {
+                                                Timber.d("发现新版本: ${result.versionName}")
+                                                updateInfo = result
+                                                showUpdateDialog = true
+                                            } else {
+                                                Timber.d("没有发现新版本")
+                                                updateMessage = "已是最新版本"
+                                            }
+                                        } catch (e: Exception) {
+                                            Timber.e(e, "检查更新失败")
+                                            updateMessage = "检查更新失败: ${e.message ?: "未知错误"}"
+                                        } finally {
+                                            isCheckingUpdate = false
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        enabled = !isCheckingUpdate,
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            ),
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
+                            },
+                            enabled = !isCheckingUpdate,
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.download),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
+                            if (isCheckingUpdate) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.download),
+                                    contentDescription = "检查更新",
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isCheckingUpdate) "检查中..." else "检查更新")
+                            Text(if (isCheckingUpdate) "正在检查…" else "检查更新")
                         }
                     }
                 }
@@ -310,15 +314,109 @@ fun Page_About(navController: NavController) {
     if (showUpdateDialog && updateInfo != null) {
         AlertDialog(
             onDismissRequest = { showUpdateDialog = false },
-            title = { Text("发现新版本！") },
+            shape = MaterialTheme.shapes.extraLarge,
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.download),
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+            title = {
+                Text(
+                    text = "发现新版本",
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            },
             text = {
-                Column {
-                    Text("当前版本: $currentVersionName (版本号: $currentVersionCode)")
-                    Text("最新版本: ${updateInfo?.versionName ?: ""} (版本号: ${updateInfo?.versionCode ?: ""})")
-                    Text("安装包大小: ${updateInfo?.apkSize ?: "未知"}")
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // 版本信息行
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column {
+                            Text(
+                                text = "当前版本",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = "$currentVersionName ($currentVersionCode)",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "最新版本",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = "${updateInfo?.versionName ?: ""} (${updateInfo?.versionCode ?: ""})",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("更新内容:")
-                    Text(updateInfo?.description ?: "")
+
+                    // 安装包大小
+                    Text(
+                        text = "安装包大小: ${updateInfo?.apkSize ?: "未知"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 更新内容标题
+                    Text(
+                        text = "更新内容",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 更新内容列表
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
+                    ) {
+                        val lines =
+                            (updateInfo?.description ?: "")
+                                .split("\n")
+                                .filter { it.isNotBlank() }
+
+                        lines.forEachIndexed { index, line ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                            ) {
+                                Text(
+                                    text = "•",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(end = 8.dp),
+                                )
+                                Text(
+                                    text = line.trimStart { it.isDigit() || it == '.' || it == ' ' },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
+                            if (index < lines.lastIndex) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -344,7 +442,7 @@ fun Page_About(navController: NavController) {
     // 无更新或出错提示
     if (updateMessage.isNotEmpty()) {
         LaunchedEffect(updateMessage) {
-            Toast.makeText(context, updateMessage, Toast.LENGTH_SHORT).show()
+            snackbarHostState.showSnackbar(updateMessage, duration = SnackbarDuration.Short)
             updateMessage = ""
         }
     }
@@ -356,7 +454,8 @@ data class UpdateInfo(
     val versionCode: Int,
     val description: String,
     val downloadUrl: String,
-    val apkSize: String = "未知", // APK大小，默认为"未知"
+    // APK大小，默认为"未知"
+    val apkSize: String = "未知",
 )
 
 // 检查更新函数

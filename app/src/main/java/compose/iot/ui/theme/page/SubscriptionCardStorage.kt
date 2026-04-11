@@ -2,12 +2,9 @@ package compose.iot.ui.theme.page
 
 import android.content.Context
 import androidx.core.content.edit
-import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
 import compose.iot.mqtt.ServerType
 import compose.iot.mqtt.SubscriptionCard
-import org.json.JSONArray
-import org.json.JSONObject
 import timber.log.Timber
 
 private const val SUBSCRIPTION_CARDS_PREFS = "subscription_cards"
@@ -15,86 +12,6 @@ private const val SWITCH_STATES_PREFS = "switch_states"
 private const val SLIDER_STATES_PREFS = "slider_states"
 
 internal object SubscriptionCardStorage {
-    fun saveCards(
-        context: Context,
-        cards: List<SubscriptionCard>,
-    ) {
-        val prefs = context.getSharedPreferences(SUBSCRIPTION_CARDS_PREFS, Context.MODE_PRIVATE)
-        val jsonArray = JSONArray()
-
-        cards.forEach { card ->
-            val cardJson =
-                JSONObject().apply {
-                    put("topic", card.topic)
-                    put("displayName", card.displayName)
-                    put("jsonParam", card.jsonParam)
-                    put("unitSuffix", card.unitSuffix)
-                    put("cardStyle", card.cardStyle.name)
-                    put("deviceType", card.deviceType.name)
-                    put("serverType", card.serverType.name)
-                    put("isButtonStyle", card.isButtonStyle)
-                    put("isSliderStyle", card.isSliderStyle)
-                    put("isPushButtonStyle", card.isPushButtonStyle)
-                    put("switchOnValue", card.switchOnValue)
-                    put("switchOffValue", card.switchOffValue)
-                    put("buttonValue", card.buttonValue)
-                    put("sliderMin", card.sliderMin)
-                    put("sliderMax", card.sliderMax)
-                    put("sliderStep", card.sliderStep)
-                }
-            jsonArray.put(cardJson)
-        }
-
-        prefs.edit { putString("cards", jsonArray.toString()) }
-    }
-
-    fun loadCards(context: Context): List<SubscriptionCard> {
-        val prefs = context.getSharedPreferences(SUBSCRIPTION_CARDS_PREFS, Context.MODE_PRIVATE)
-        val cardsJson = prefs.getString("cards", "[]") ?: "[]"
-
-        return try {
-            val jsonArray = JSONArray(cardsJson)
-            List(jsonArray.length()) { index ->
-                val cardJson = jsonArray.getJSONObject(index)
-                SubscriptionCard(
-                    topic = cardJson.getString("topic"),
-                    displayName = cardJson.getString("displayName"),
-                    jsonParam = cardJson.getString("jsonParam"),
-                    unitSuffix = cardJson.getString("unitSuffix"),
-                    cardStyle =
-                        try {
-                            CardStyle.valueOf(cardJson.getString("cardStyle"))
-                        } catch (_: Exception) {
-                            CardStyle.MINIMAL
-                        },
-                    deviceType =
-                        try {
-                            DeviceType.valueOf(cardJson.getString("deviceType"))
-                        } catch (_: Exception) {
-                            DeviceType.SENSOR
-                        },
-                    serverType =
-                        try {
-                            ServerType.valueOf(cardJson.getString("serverType"))
-                        } catch (_: Exception) {
-                            ServerType.EMQX
-                        },
-                    isButtonStyle = cardJson.optBoolean("isButtonStyle", false),
-                    isSliderStyle = cardJson.optBoolean("isSliderStyle", false),
-                    isPushButtonStyle = cardJson.optBoolean("isPushButtonStyle", false),
-                    switchOnValue = cardJson.optString("switchOnValue", "1"),
-                    switchOffValue = cardJson.optString("switchOffValue", "0"),
-                    buttonValue = cardJson.optString("buttonValue", "1"),
-                    sliderMin = cardJson.optDouble("sliderMin", 0.0).toFloat(),
-                    sliderMax = cardJson.optDouble("sliderMax", 100.0).toFloat(),
-                    sliderStep = cardJson.optDouble("sliderStep", 1.0).toFloat(),
-                )
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
     fun loadActuatorCardValues(
         context: Context,
         cards: List<SubscriptionCard>,

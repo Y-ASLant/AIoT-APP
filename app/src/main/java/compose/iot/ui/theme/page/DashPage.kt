@@ -1,7 +1,6 @@
 package compose.iot.ui.theme.page
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,10 +9,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import compose.iot.R
-// import compose.iot.ui.theme.function.ScaffoldDemo
+import compose.iot.data.preferences.PreferencesManager
 
 @Composable
-fun Page_Dash(navController: NavController) {
+fun DashPage(navController: NavController) {
     Column(
         modifier =
             Modifier
@@ -22,6 +21,9 @@ fun Page_Dash(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val prefs = remember { compose.iot.data.preferences.PreferencesManager(context) }
+
         Text(
             text = "连接设置",
             style = MaterialTheme.typography.headlineMedium,
@@ -32,7 +34,7 @@ fun Page_Dash(navController: NavController) {
             modifier =
                 Modifier
                     .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.small,
             elevation = CardDefaults.cardElevation(4.dp),
         ) {
             Column(

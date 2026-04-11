@@ -20,10 +20,7 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# 保持应用程序的主要类不被混淆
--keep class compose.iot.MainActivity { *; }
--keep class compose.iot.ui.theme.** { *; }
--keep class compose.iot.mqtt.** { *; }
+
 
 # 保持 native 方法不被混淆
 -keepclasseswithmembernames class * {
