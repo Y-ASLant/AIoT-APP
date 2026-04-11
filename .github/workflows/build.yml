@@ -2,14 +2,18 @@ name: Android Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
+    tags:
+      - 'v*'
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 需要此权限以上传 Release 附件
 
     steps:
       - name: Checkout Code
@@ -20,30 +24,50 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Extract Versions
+        id: vars
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # 提取 Tag 值，如果 Tag 是 v1.6.0，提取出 1.6.0
+            echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+            # 使用当前日期作为 Version Code，如 20260412
+            echo "VERSION_CODE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+            echo "IS_RELEASE=true" >> $GITHUB_ENV
+          else
+            echo "VERSION_NAME=1.5.0" >> $GITHUB_ENV
+            echo "VERSION_CODE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+            echo "IS_RELEASE=false" >> $GITHUB_ENV
+          fi
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Check Kotlin formatting (ktlint)
-        run: ./gradlew ktlintCheck --no-daemon
+      - name: Build and Lint (Ktlint, Release)
+        # 将上面提取到的参数传入 gradle 作为构建内部版本号
+        run: ./gradlew ktlintCheck :app:assembleRelease --no-daemon --parallel --build-cache -PVERSION_NAME="${{ env.VERSION_NAME }}" -PVERSION_CODE="${{ env.VERSION_CODE }}"
 
-      - name: Build with Gradle (Debug)
-        run: ./gradlew :app:assembleDebug --no-daemon
-
-      - name: Build with Gradle (Release)
-        run: ./gradlew :app:assembleRelease --no-daemon
-
-      - name: Upload Debug APK
+      - name: Upload arm64-v8a APK (Signed)
         uses: actions/upload-artifact@v4
         with:
-          name: AIoT-APP-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 7
-
-      - name: Upload Release APKs (Signed)
-        uses: actions/upload-artifact@v4
-        with:
-          name: AIoT-APP-Release-APKs-Signed
-          path: app/build/outputs/apk/release/*.apk
+          name: AIoT-APP-arm64-v8a-Signed
+          path: app/build/outputs/apk/release/*arm64-v8a*.apk
           retention-days: 14
+
+      - name: Upload armeabi-v7a APK (Signed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIoT-APP-armeabi-v7a-Signed
+          path: app/build/outputs/apk/release/*armeabi-v7a*.apk
+          retention-days: 14
+
+      - name: Publish GitHub Release
+        if: env.IS_RELEASE == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 版本 ${{ env.VERSION_NAME }}
+          files: app/build/outputs/apk/release/*.apk
+          generate_release_notes: true
