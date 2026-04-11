@@ -1,6 +1,5 @@
 package compose.iot.mqtt
 
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import timber.log.Timber
 import java.nio.charset.StandardCharsets
 
 class MqttManager() {
@@ -41,7 +41,10 @@ class MqttManager() {
         this.password = password
     }
 
-    fun connect(onConnectComplete: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun connect(
+        onConnectComplete: () -> Unit = {},
+        onError: (String) -> Unit = {},
+    ) {
         ioScope.launch {
             try {
                 clientMutex.withLock {
@@ -53,41 +56,47 @@ class MqttManager() {
                     }
 
                     mqttClient = MqttClient(serverUri, clientId, MemoryPersistence())
-                    val options = MqttConnectOptions().apply {
-                        isCleanSession = true
-                        connectionTimeout = 60
-                        keepAliveInterval = 60
-                        userName = username
-                        password = this@MqttManager.password?.toCharArray()
-                    }
-
-                    mqttClient?.setCallback(object : MqttCallback {
-                        override fun connectionLost(cause: Throwable?) {
-                            Log.e("MQTT", "Connection lost", cause)
-                            ioScope.launch {
-                                withContext(Dispatchers.Main) {
-                                    onError("连接丢失: ${cause?.message ?: "未知错误"}")
-                                }
-                            }
+                    val options =
+                        MqttConnectOptions().apply {
+                            isCleanSession = true
+                            connectionTimeout = 60
+                            keepAliveInterval = 60
+                            userName = username
+                            password = this@MqttManager.password?.toCharArray()
                         }
 
-                        override fun messageArrived(topic: String?, message: MqttMessage?) {
-                            message?.payload?.let { payload ->
-                                val messageStr = String(payload, StandardCharsets.UTF_8)
-                                topic?.let { subscriptionCallbacks[it] }?.let { callback ->
-                                    ioScope.launch {
-                                        withContext(Dispatchers.Main) {
-                                            callback(messageStr)
+                    mqttClient?.setCallback(
+                        object : MqttCallback {
+                            override fun connectionLost(cause: Throwable?) {
+                                Timber.e(cause, "Connection lost")
+                                ioScope.launch {
+                                    withContext(Dispatchers.Main) {
+                                        onError("连接丢失: ${cause?.message ?: "未知错误"}")
+                                    }
+                                }
+                            }
+
+                            override fun messageArrived(
+                                topic: String?,
+                                message: MqttMessage?,
+                            ) {
+                                message?.payload?.let { payload ->
+                                    val messageStr = String(payload, StandardCharsets.UTF_8)
+                                    topic?.let { subscriptionCallbacks[it] }?.let { callback ->
+                                        ioScope.launch {
+                                            withContext(Dispatchers.Main) {
+                                                callback(messageStr)
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        override fun deliveryComplete(token: IMqttDeliveryToken?) {
-                            Log.d("MQTT", "Message delivered")
-                        }
-                    })
+                            override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                                Timber.d("Message delivered")
+                            }
+                        },
+                    )
 
                     mqttClient?.connect(options)
                     mqttClient?.subscribe(topic)
@@ -115,14 +124,17 @@ class MqttManager() {
                     mqttClient = null
                 }
             } catch (e: Exception) {
-                Log.e("MQTT", "Disconnect error", e)
+                Timber.e(e, "Disconnect error")
             }
         }
     }
 
     fun isConnected(): Boolean = mqttClient?.isConnected == true
 
-    fun subscribe(topic: String, onMessageReceived: (String) -> Unit) {
+    fun subscribe(
+        topic: String,
+        onMessageReceived: (String) -> Unit,
+    ) {
         ioScope.launch {
             try {
                 if (mqttClient?.isConnected != true) {
@@ -132,18 +144,21 @@ class MqttManager() {
                         },
                         onError = { _ ->
                             // 处理连接错误
-                        }
+                        },
                     )
                 } else {
                     performSubscribe(topic, onMessageReceived)
                 }
             } catch (e: Exception) {
-                Log.e("MQTT", "Subscribe error", e)
+                Timber.e(e, "Subscribe error")
             }
         }
     }
 
-    private fun performSubscribe(topic: String, onMessageReceived: (String) -> Unit) {
+    private fun performSubscribe(
+        topic: String,
+        onMessageReceived: (String) -> Unit,
+    ) {
         mqttClient?.subscribe(topic, 0) { _, message ->
             val messageStr = String(message.payload, StandardCharsets.UTF_8)
             ioScope.launch {
@@ -161,7 +176,7 @@ class MqttManager() {
                 mqttClient?.unsubscribe(topic)
                 subscriptionCallbacks.remove(topic)
             } catch (e: Exception) {
-                Log.e("MQTT", "Unsubscribe error", e)
+                Timber.e(e, "Unsubscribe error")
             }
         }
     }
@@ -170,7 +185,7 @@ class MqttManager() {
         topic: String,
         message: String,
         onComplete: () -> Unit = {},
-        onError: (String) -> Unit = {}
+        onError: (String) -> Unit = {},
     ) {
         ioScope.launch {
             try {
@@ -181,7 +196,7 @@ class MqttManager() {
                         },
                         onError = { error ->
                             onError(error)
-                        }
+                        },
                     )
                 } else {
                     performPublish(topic, message, onComplete, onError)
@@ -198,7 +213,7 @@ class MqttManager() {
         topic: String,
         message: String,
         onComplete: () -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
     ) {
         ioScope.launch {
             try {

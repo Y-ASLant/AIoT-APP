@@ -3,8 +3,12 @@ package compose.iot.ui.theme.page
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,21 +16,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import compose.iot.mqtt.MqttManager
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.navigation.NavController
+import compose.iot.mqtt.MqttManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
+fun Page_Login(
+    navController: NavController? = null,
+    mqttManager: MqttManager,
+) {
     val context = LocalContext.current
     var isConnected by remember { mutableStateOf(mqttManager.isConnected()) }
 
@@ -35,33 +38,33 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
         remember { context.getSharedPreferences("mqtt_settings", Context.MODE_PRIVATE) }
     var serverIp by remember {
         mutableStateOf(
-            sharedPreferences.getString("server_ip", "mqtt.aslant.top") ?: ""
+            sharedPreferences.getString("server_ip", "mqtt.aslant.top") ?: "",
         )
     }
     var serverPort by remember {
         mutableStateOf(
-            sharedPreferences.getString("server_port", "1883") ?: ""
+            sharedPreferences.getString("server_port", "1883") ?: "",
         )
     }
     var clientId by remember {
         mutableStateOf(
             sharedPreferences.getString(
                 "client_id",
-                "ComposeApplication"
-            ) ?: ""
+                "ComposeApplication",
+            ) ?: "",
         )
     }
     var autoConnect by remember {
         mutableStateOf(
             sharedPreferences.getBoolean(
                 "auto_connect",
-                false
-            )
+                false,
+            ),
         )
     }
     var username by remember {
         mutableStateOf(
-            sharedPreferences.getString("username", "ASLant") ?: "ASLant"
+            sharedPreferences.getString("username", "ASLant") ?: "ASLant",
         )
     }
     var password by remember { mutableStateOf(sharedPreferences.getString("password", "") ?: "") }
@@ -74,7 +77,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
         username: String?,
         password: String?,
         context: Context,
-        onConnectionResult: (Boolean) -> Unit
+        onConnectionResult: (Boolean) -> Unit,
     ) {
         val serverUri = "tcp://$serverIp:$serverPort"
         mqttManager.setServerUri(serverUri)
@@ -89,7 +92,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
             onError = { error ->
                 onConnectionResult(false)
                 Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-            }
+            },
         )
     }
 
@@ -101,53 +104,55 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                     IconButton(onClick = { navController?.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-
             // MQTT状态卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    ),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                     horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = if (isConnected) Icons.Default.CheckCircle else Icons.Default.Warning,
                         contentDescription = null,
-                        tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     )
                     Spacer(modifier = Modifier.width(24.dp))
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text(
                             text = if (isConnected) "服务器已连接" else "服务器未连接",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                         Text(
                             text = if (isConnected) "服务器: $serverIp:$serverPort\nClient ID: $clientId" else "请配置MQTT服务器",
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                         )
                     }
                 }
@@ -157,20 +162,22 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
                         text = "MQTT服务器配置",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
                     )
 
                     OutlinedTextField(
@@ -178,7 +185,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                         onValueChange = { serverIp = it },
                         label = { Text("服务器地址") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
                     )
 
                     OutlinedTextField(
@@ -187,7 +194,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                         label = { Text("端口号") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
                     )
 
                     OutlinedTextField(
@@ -195,7 +202,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                         onValueChange = { clientId = it },
                         label = { Text("Client ID") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
                     )
 
                     OutlinedTextField(
@@ -203,7 +210,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                         onValueChange = { username = it },
                         label = { Text("用户名") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
                     )
 
                     OutlinedTextField(
@@ -213,14 +220,13 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        visualTransformation = PasswordVisualTransformation()
+                        visualTransformation = PasswordVisualTransformation(),
                     )
-
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text("开启自动连接")
                         Switch(
@@ -229,13 +235,13 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                                 autoConnect = it
                                 // 保存自动连接设置
                                 sharedPreferences.edit { putBoolean("auto_connect", it) }
-                            }
+                            },
                         )
                     }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Button(
                             onClick = {
@@ -255,7 +261,7 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                                         clientId,
                                         username,
                                         password,
-                                        context
+                                        context,
                                     ) { success ->
                                         isConnected = success
                                     }
@@ -267,17 +273,16 @@ fun Page_Login(navController: NavController? = null, mqttManager: MqttManager) {
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isConnected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                            )
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor = if (isConnected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                ),
                         ) {
                             Text(if (isConnected) "断开连接" else "连接服务器")
                         }
                     }
                 }
             }
-
-
         }
     }
 }

@@ -9,16 +9,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import compose.iot.ui.theme.ui.theme.AIOT_ComposeTheme
-import compose.iot.ui.theme.function.Background
-import compose.iot.ui.theme.function.Page_Switch
-import androidx.navigation.compose.rememberNavController
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import compose.iot.mqtt.MqttManager
+import compose.iot.ui.theme.function.Background
+import compose.iot.ui.theme.function.Page_Switch
 import compose.iot.ui.theme.page.*
 import compose.iot.ui.theme.page.video.Page_VideoStream
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import compose.iot.ui.theme.ui.theme.AIOT_ComposeTheme
 
 // 全局状态
 object AppState {
@@ -32,12 +32,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // 安装 SplashScreen
         installSplashScreen()
-        
+
         super.onCreate(savedInstanceState)
-        
+
         // 初始化 MQTT Manager
         mqttManager = MqttManager()
-        
+
         // 检查是否需要自动连接
         val sharedPreferences = getSharedPreferences("mqtt_settings", MODE_PRIVATE)
         val autoConnect = sharedPreferences.getBoolean("auto_connect", false)
@@ -58,14 +58,14 @@ class MainActivity : ComponentActivity() {
                 },
                 onError = { error ->
                     Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-                }
+                },
             )
         }
-        
+
         enableEdgeToEdge()
         setContent {
             AIOT_ComposeTheme {
-                Background() //全局背景
+                Background() // 全局背景
                 val scope = rememberCoroutineScope()
                 val navController = rememberNavController()
 

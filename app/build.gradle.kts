@@ -2,6 +2,21 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ktlint)
+}
+
+ktlint {
+    android.set(true)
+    baseline.set(file("ktlint-baseline.xml"))
+    outputColorName.set("NONE")
+    filter {
+        exclude("**/build/**")
+        exclude("**/generated/**")
+    }
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.SARIF)
+    }
 }
 
 android {
@@ -27,7 +42,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // 启用R8完全模式优化
             isDebuggable = false
@@ -57,10 +72,12 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+        kotlinCompilerExtensionVersion =
+            libs.versions.compose.compiler.get()
     }
     packaging {
         resources {
@@ -85,10 +102,13 @@ dependencies {
     lintChecks(libs.androidx.material3.lint)
     implementation(libs.androidx.material.icons.core)
 
-    //OkHttp for WebSocket
+    // OkHttp for WebSocket
     implementation(libs.okhttp)
 
     implementation(libs.androidx.core.splashscreen)
+
+    // Timber logging
+    implementation(libs.timber)
 
     // MQTT Client
     implementation(libs.org.eclipse.paho.client.mqttv3)

@@ -1,0 +1,2 @@
+android
+max-line-length=120

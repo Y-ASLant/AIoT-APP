@@ -24,13 +24,13 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 
 ## 技术栈
 
-- Kotlin
-- Jetpack Compose
-- Android Material 3
+- Kotlin 2.1.20
+- Jetpack Compose (Material 3)
 - Android Navigation Compose
-- Eclipse Paho MQTT
+- Eclipse Paho MQTT Client
 - OkHttp / Java-WebSocket
 - SharedPreferences 本地存储
+- ktlint 代码风格检查
 
 ## 运行要求
 
@@ -46,7 +46,21 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 2. 等待 Gradle 同步完成。
 3. 运行 `app` 模块到模拟器或真机。
 
-命令行编译：
+### 代码质量检查
+
+项目已集成 ktlint 用于代码风格检查。
+
+```powershell
+# 检查代码风格
+./gradlew ktlintCheck --no-daemon
+
+# 自动格式化代码
+./gradlew ktlintFormat --no-daemon
+```
+
+> 推荐使用 Android Studio 内置格式化 (`Ctrl+Alt+L`)，基于 `.editorconfig` 配置。
+
+### APK 构建
 
 ```powershell
 ./gradlew :app:assembleDebug
@@ -118,36 +132,30 @@ Android Studio 打 APK：
 ## 项目结构
 
 ```text
-app/src/main/java/compose/iot/
-  MainActivity.kt
-  mqtt/
-    MqttManager.kt
-    HomeAssistantManager.kt
-    SubscriptionCard.kt
-    SensorHistoryManager.kt
-  ui/theme/
-    function/
-    page/
-      Page_Index.kt
-      Page_login.kt
-      Page_HomeAssistant.kt
-      Page_About.kt
-      Page_Changelog.kt
-      video/
+compose.iot/
+├── mqtt/                      # MQTT 通信层
+│   ├── MqttManager.kt         # MQTT 连接管理
+│   ├── HomeAssistantManager.kt # Home Assistant 集成
+│   ├── SubscriptionCard.kt    # 设备卡片管理
+│   └── SensorHistoryManager.kt # 传感器历史数据
+├── ui/theme/
+│   ├── function/               # UI 组件
+│   │   ├── Bottom_Bar.kt       # 底部导航栏
+│   │   └── Dialog.kt           # 对话框组件
+│   ├── page/                  # 页面
+│   │   ├── Index.kt           # 设备中心主页
+│   │   ├── Login.kt           # 登录配置
+│   │   ├── Dash.kt            # 仪表盘
+│   │   ├── HomeAssistant.kt   # HA 配置
+│   │   ├── About.kt           # 关于页面
+│   │   ├── Changelog.kt       # 更新日志
+│   │   └── video/             # 视频流页面
+│   └── theme/                  # 主题配置
+│       ├── Color.kt
+│       ├── Theme.kt
+│       └── Type.kt
+└── MainActivity.kt
 ```
-
-## 当前实现说明
-
-- MQTT 连接、订阅、发布已经切到后台线程，避免阻塞界面
-- Home Assistant 的监听器和轮询任务支持按实体释放
-- 新增、编辑、删除卡片时，MQTT 与 Home Assistant 的订阅回收逻辑已做一致化处理
-
-## 已知限制
-
-- Home Assistant 当前是轮询，不是事件流订阅
-- 项目目前没有单元测试和 UI 测试目录
-- 配置信息当前主要通过 SharedPreferences 存储
-- 核心页面 `Page_Index.kt` 仍然偏大，后续适合继续拆分
 
 ## 许可证
 

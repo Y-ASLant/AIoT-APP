@@ -46,12 +46,26 @@
     java.lang.Object readResolve();
 }
 
-# 保留日志相关类
--keep class android.util.Log { *; }
--keep class org.slf4j.** { *; }
--keep class ch.qos.logback.** { *; }
--dontwarn org.slf4j.**
--dontwarn ch.qos.logback.**
+# ── Timber：Release 构建中通过 R8 彻底移除日志调用 ──
+# 删除所有 Timber 日志方法调用（Debug 日志不会出现在 Release APK 中）
+-assumenosideeffects class timber.log.Timber {
+    public static void v(...);
+    public static void d(...);
+    public static void i(...);
+    public static void w(...);
+    public static void e(...);
+    public static void wtf(...);
+}
+
+# 同时也删除 android.util.Log 的残留调用（以防万一）
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+    public static int wtf(...);
+}
 
 # 保留 MQTT 相关类
 -keep class org.eclipse.paho.client.mqttv3.** { *; }

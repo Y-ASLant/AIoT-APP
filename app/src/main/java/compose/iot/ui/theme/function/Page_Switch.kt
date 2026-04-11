@@ -8,37 +8,40 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import compose.iot.AppState
+import compose.iot.mqtt.MqttManager
 import compose.iot.ui.theme.page.Page_About
 import compose.iot.ui.theme.page.Page_Dash
 import compose.iot.ui.theme.page.Page_Index
-import compose.iot.mqtt.MqttManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import androidx.navigation.NavController
 
 @Composable
 fun Page_Switch(
     scope: CoroutineScope,
     navController: NavController,
-    mqttManager: MqttManager
+    mqttManager: MqttManager,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
         ) {
             AnimatedContent(
                 targetState = AppState.selectedTab.intValue,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(350)) togetherWith fadeOut(
-                        animationSpec = tween(350)
-                    )
-                }, label = ""
+                    fadeIn(animationSpec = tween(350)) togetherWith
+                        fadeOut(
+                            animationSpec = tween(350),
+                        )
+                },
+                label = "",
             ) { targetTab ->
                 when (targetTab) {
                     0 -> Page_Index(mqttManager)
