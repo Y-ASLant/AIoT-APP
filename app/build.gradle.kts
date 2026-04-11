@@ -78,20 +78,13 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.lifecycle.viewmodel)
-    implementation(libs.accompanist.pager)
 
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.utilcodex)
     implementation(libs.androidx.ui.text.google.fonts)
-    implementation(libs.androidx.material3.lint)
+    lintChecks(libs.androidx.material3.lint)
     implementation(libs.androidx.material.icons.core)
 
-    //websocket
-    implementation(libs.java.websocket)
-    
     //OkHttp for WebSocket
     implementation(libs.okhttp)
 

@@ -34,6 +34,10 @@ class HomeAssistantManager(private val context: Context) {
             stateChangeListeners.remove(entityId)
         }
     }
+
+    fun clearStateChangeListeners(entityId: String) {
+        stateChangeListeners.remove(entityId)
+    }
     
     // 通知状态变化
     private fun notifyStateChange(entityId: String, state: String) {
@@ -214,7 +218,13 @@ class HomeAssistantManager(private val context: Context) {
         Log.d("HA_REST", "正在断开所有连接")
         pollingJobs.values.forEach { it.cancel() }
         pollingJobs.clear()
+        stateChangeListeners.clear()
         scope.cancel()
+    }
+
+    fun unsubscribe(entityId: String) {
+        pollingJobs.remove(entityId)?.cancel()
+        clearStateChangeListeners(entityId)
     }
 
     fun callService(

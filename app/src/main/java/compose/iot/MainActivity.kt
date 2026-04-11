@@ -92,6 +92,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        mqttManager.disconnect()
+        mqttManager.release()
     }
 }

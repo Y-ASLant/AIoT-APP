@@ -69,7 +69,7 @@ fun Page_Index(mqttManager: MqttManager) {
     val historyManager = remember { SensorHistoryManager(context) }
     
     var subscriptionCards by remember { 
-        mutableStateOf(loadSubscriptionCards(context))
+        mutableStateOf(SubscriptionCardStorage.loadCards(context))
     }
     var cardValues by remember { mutableStateOf(mapOf<String, String>()) }
     var topicSubscriptionCount by remember { 
@@ -82,6 +82,19 @@ fun Page_Index(mqttManager: MqttManager) {
 
     // 创建 Home Assistant 管理器
     val haManager = remember { HomeAssistantManager(context) }
+    val subscriptionController = remember(context, mqttManager, haManager, historyManager, scope) {
+        DeviceSubscriptionController(
+            context = context,
+            mqttManager = mqttManager,
+            haManager = haManager,
+            historyManager = historyManager,
+            scope = scope,
+            getCards = { subscriptionCards },
+            updateCardValue = { cardId, value ->
+                cardValues = cardValues + (cardId to value)
+            }
+        )
+    }
 
     // 添加网格滚动状态
     val gridState = rememberLazyGridState()
@@ -113,204 +126,20 @@ fun Page_Index(mqttManager: MqttManager) {
             haManager.setPollingInterval(pollingInterval)
         }
         
-        // 初始化执行器状态：从SharedPreferences加载所有执行器状态并更新到cardValues
         Log.d("Switch_States", "开始初始化执行器状态")
-        val switchStatesPrefs = context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
-        val sliderStatesPrefs = context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
-        
-        // 遍历所有卡片，找出执行器类型的卡片
-        subscriptionCards.filter { it.deviceType == DeviceType.ACTUATOR }.forEach { card ->
-            val cardId = "${card.topic}:${card.jsonParam}"
-            
-            if (card.isButtonStyle) {
-                // 对于开关类型，读取布尔值
-                val isOn = switchStatesPrefs.getBoolean(cardId, false)
-                val value = if (isOn) {
-                    if (card.serverType == ServerType.HomeAssistant) "on" else card.switchOnValue
-                } else {
-                    if (card.serverType == ServerType.HomeAssistant) "off" else card.switchOffValue
-                }
-                Log.d("Switch_States", "初始化开关状态 $cardId = $value (isOn=$isOn)")
-                cardValues = cardValues + (cardId to value)
-            } else if (card.isSliderStyle) {
-                // 对于滑块类型，读取浮点值
-                val floatValue = sliderStatesPrefs.getFloat(cardId, card.sliderMin)
-                val value = floatValue.toString()
-                Log.d("Switch_States", "初始化滑块状态 $cardId = $value")
-                cardValues = cardValues + (cardId to value)
-            }
-        }
+        cardValues = cardValues + SubscriptionCardStorage.loadActuatorCardValues(context, subscriptionCards)
     }
 
     // 在组件首次加载时重新订阅所有主题
     LaunchedEffect(Unit) {
-        Log.d("HA_REST", "开始订阅所有主题")
-        subscriptionCards.map { it.topic }.distinct().forEach { topic ->
-            Log.d("HA_REST", "处理主题: $topic")
-            when {
-                topic.startsWith("homeassistant/") -> {
-                    Log.d("HA_REST", "发现 HA 主题，使用 HA 管理器订阅")
-                    val entityId = topic.removePrefix("homeassistant/").removeSuffix("/state")
-                    
-                    // 添加状态变化监听器
-                    haManager.addStateChangeListener(entityId) { cardId, newState ->
-                        Log.d("HA_StateListener", "收到状态变化通知: $cardId = $newState")
-                        cardValues = cardValues + (cardId to newState)
-                    }
-                    
-                    // 先获取一次初始状态
-                    scope.launch {
-                        try {
-                            val initialState = haManager.fetchEntityState(entityId)
-                            if (initialState != null) {
-                                JSONObject().apply {
-                                    put("state", initialState)
-                                }
-                                Log.d("HA_REST", "获取到 $entityId 的初始状态: $initialState")
-                                subscriptionCards
-                                    .filter { it.topic == topic }
-                                    .forEach { card ->
-                                        val cardId = "${card.topic}:${card.jsonParam}"
-                                        cardValues = cardValues + (cardId to initialState)
-                                        
-                                        // 如果是执行器，更新本地存储的状态
-                                        if (card.deviceType == DeviceType.ACTUATOR) {
-                                            val isOn = initialState == "on"
-                                            context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
-                                                .edit()
-                                                .apply {
-                                                    putBoolean(cardId, isOn)
-                                                    apply()
-                                                }
-                                        }
-                                    }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("HA_REST", "获取 $entityId 初始状态失败", e)
-                        }
-                    }
-                    
-                    // 然后开始订阅状态更新
-                    haManager.subscribe(entityId) { message ->
-                        try {
-                            val json = JSONObject(message)
-                            Log.d("HA_REST", "收到 HA 消息: $message")
-                            subscriptionCards
-                                .filter { it.topic == topic }
-                                .forEach { card ->
-                                    val cardId = "${card.topic}:${card.jsonParam}"
-                                    // 检查 JSON 消息是否包含此卡片对应的键
-                                    if (json.has(card.jsonParam)) {
-                                        val value = json.optString(card.jsonParam) // 如果键存在，就获取值
-
-                                        // 更新卡片值以触发UI重组（如果需要）
-                                        cardValues = cardValues + (cardId to value)
-
-                                        // 如果是传感器，记录历史数据
-                                        if (card.deviceType == DeviceType.SENSOR && value != "NULL") { // 保留原有NULL检查以防空值
-                                            historyManager.addData(cardId, value, card.unitSuffix)
-                                        }
-
-                                        // 如果是执行器，更新本地存储的状态
-                                        if (card.deviceType == DeviceType.ACTUATOR && value != "NULL") { // 保留原有NULL检查以防空值
-                                            if (card.isSliderStyle) {
-                                                try {
-                                                    val floatValue = value.toFloat()
-                                                    context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
-                                                        .edit {
-                                                            putFloat(cardId, floatValue)
-                                                        }
-                                                    Log.d("MQTT_Slider", "接收到EMQX滑动条值更新: $cardId = $floatValue")
-                                                } catch (e: Exception) {
-                                                    Log.e("MQTT_Slider", "无法解析EMQX滑动条值: $value", e)
-                                                }
-                                            } else if (card.isButtonStyle) {
-                                                val isOn = value == card.switchOnValue
-                                                context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
-                                                    .edit {
-                                                        putBoolean(cardId, isOn)
-                                                    }
-                                                Log.d("MQTT_Switch", "Updated switch state via MQTT: $cardId = $isOn (value=$value)")
-                                            }
-                                        }
-                                    } // 如果消息中不包含这个 card.jsonParam 键，则不处理这个卡片的状态更新
-                                }
-                        } catch (e: Exception) {
-                            Log.e("HA_REST", "处理 HA 消息失败", e)
-                        }
-                    }
-                }
-                else -> {
-                    Log.d("HA_REST", "发现 MQTT 主题，使用 MQTT 管理器订阅")
-                    mqttManager.subscribe(topic) { message ->
-                        try {
-                            val json = JSONObject(message)
-                            subscriptionCards
-                                .filter { it.topic == topic }
-                                .forEach { card ->
-                                    val cardId = "${card.topic}:${card.jsonParam}"
-                                    // 检查 JSON 消息是否包含此卡片对应的键
-                                    if (json.has(card.jsonParam)) {
-                                        val value = json.optString(card.jsonParam) // 如果键存在，就获取值
-
-                                        // 更新卡片值以触发UI重组（如果需要）
-                                        cardValues = cardValues + (cardId to value)
-
-                                        // 如果是传感器，记录历史数据
-                                        if (card.deviceType == DeviceType.SENSOR && value != "NULL") { // 保留原有NULL检查以防空值
-                                            historyManager.addData(cardId, value, card.unitSuffix)
-                                        }
-
-                                        // 如果是执行器，更新本地存储的状态
-                                        if (card.deviceType == DeviceType.ACTUATOR && value != "NULL") { // 保留原有NULL检查以防空值
-                                            if (card.isSliderStyle) {
-                                                try {
-                                                    val floatValue = value.toFloat()
-                                                    context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
-                                                        .edit {
-                                                            putFloat(cardId, floatValue)
-                                                        }
-                                                    Log.d("MQTT_Slider", "接收到EMQX滑动条值更新: $cardId = $floatValue")
-                                                } catch (e: Exception) {
-                                                    Log.e("MQTT_Slider", "无法解析EMQX滑动条值: $value", e)
-                                                }
-                                            } else if (card.isButtonStyle) {
-                                                val isOn = value == card.switchOnValue
-                                                context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
-                                                    .edit {
-                                                        putBoolean(cardId, isOn)
-                                                    }
-                                                Log.d("MQTT_Switch", "Updated switch state via MQTT: $cardId = $isOn (value=$value)")
-                                            }
-                                        }
-                                    } // 如果消息中不包含这个 card.jsonParam 键，则不处理这个卡片的状态更新
-                                }
-                        } catch (e: Exception) {
-                            // 处理错误情况
-                            Log.e("MQTT_Error", "处理MQTT消息失败", e)
-                        }
-                    }
-                }
-            }
-        }
+        subscriptionController.subscribeAll()
     }
 
     // 在组件销毁时断开连接
     DisposableEffect(Unit) {
         onDispose {
             Log.d("HA_WS", "组件销毁，断开 HA 连接")
-            
-            // 移除所有状态变化监听器
-            subscriptionCards
-                .filter { it.topic.startsWith("homeassistant/") }
-                .map { it.topic.removePrefix("homeassistant/").removeSuffix("/state") }
-                .distinct()
-                .forEach { entityId ->
-                    // 使用一个空函数作为参数，实际上会移除所有监听器
-                    haManager.removeStateChangeListener(entityId) { _, _ -> }
-                }
-            
-            haManager.disconnect()
+            subscriptionController.dispose()
         }
     }
 
@@ -1411,7 +1240,7 @@ fun Page_Index(mqttManager: MqttManager) {
                 {
                     val currentCount = topicSubscriptionCount[card.topic] ?: 1
                     if (currentCount <= 1) {
-                        mqttManager.unsubscribe(card.topic)
+                        subscriptionController.unsubscribeTopic(card.topic)
                         topicSubscriptionCount = topicSubscriptionCount - card.topic
                     } else {
                         topicSubscriptionCount = topicSubscriptionCount + (card.topic to (currentCount - 1))
@@ -1421,7 +1250,7 @@ fun Page_Index(mqttManager: MqttManager) {
                     val newCards = subscriptionCards.filter { it != card }
                     subscriptionCards = newCards
                     cardValues = cardValues - cardId
-                    saveSubscriptionCards(context, newCards)
+                    SubscriptionCardStorage.saveCards(context, newCards)
                     
                     showSubscribeDialog = false
                     editingCard = null
@@ -1430,10 +1259,22 @@ fun Page_Index(mqttManager: MqttManager) {
                 }
             },
             onSubscribe = { card ->
+                val previousCard = editingCard
+                val previousTopic = previousCard?.topic
 
                 // 如果是编辑模式，先移除旧卡片
-                if (editingCard != null) {
-                    subscriptionCards = subscriptionCards.filter { it != editingCard }
+                if (previousCard != null) {
+                    subscriptionCards = subscriptionCards.filter { it != previousCard }
+
+                    if (previousTopic != null && previousTopic != card.topic) {
+                        val previousCount = topicSubscriptionCount[previousTopic] ?: 1
+                        if (previousCount <= 1) {
+                            subscriptionController.unsubscribeTopic(previousTopic)
+                            topicSubscriptionCount = topicSubscriptionCount - previousTopic
+                        } else {
+                            topicSubscriptionCount = topicSubscriptionCount + (previousTopic to (previousCount - 1))
+                        }
+                    }
                 }
                 
                 // 检查是否已经订阅了相同的主题和参数（仅在新增时检查）
@@ -1452,45 +1293,11 @@ fun Page_Index(mqttManager: MqttManager) {
                 // 添加新卡片
                 val newCards = subscriptionCards + card
                 subscriptionCards = newCards
-                saveSubscriptionCards(context, newCards)
+                SubscriptionCardStorage.saveCards(context, newCards)
 
                 // 如果是新主题，进行订阅
                 if (!topicSubscriptionCount.containsKey(card.topic)) {
-                    when {
-                        card.topic.startsWith("homeassistant/") -> {
-                            val entityId = card.topic.removePrefix("homeassistant/").removeSuffix("/state")
-                            haManager.subscribe(entityId) { message ->
-                                try {
-                                    val json = JSONObject(message)
-                                    subscriptionCards
-                                        .filter { it.topic == card.topic }
-                                        .forEach { subCard ->
-                                            val subCardId = "${subCard.topic}:${subCard.jsonParam}"
-                                            val value = json.optString(subCard.jsonParam, "NULL")
-                                            cardValues = cardValues + (subCardId to value)
-                                        }
-                                } catch (e: Exception) {
-                                    Log.e("HA_REST", "处理 HA 消息失败", e)
-                                }
-                            }
-                        }
-                        else -> {
-                            mqttManager.subscribe(card.topic) { message ->
-                                try {
-                                    val json = JSONObject(message)
-                                    subscriptionCards
-                                        .filter { it.topic == card.topic }
-                                        .forEach { subCard ->
-                                            val subCardId = "${subCard.topic}:${subCard.jsonParam}"
-                                            val value = json.optString(subCard.jsonParam, "NULL")
-                                            cardValues = cardValues + (subCardId to value)
-                                        }
-                                } catch (_: Exception) {
-                                    // 处理错误情况
-                                }
-                            }
-                        }
-                    }
+                    subscriptionController.subscribeTopic(card.topic)
                 }
 
                 // 更新主题订阅计数
@@ -1502,80 +1309,5 @@ fun Page_Index(mqttManager: MqttManager) {
                 editingCard = null
             }
         )
-    }
-}
-
-// 保存订阅卡片数据到 SharedPreferences
-private fun saveSubscriptionCards(context: Context, cards: List<SubscriptionCard>) {
-    val prefs = context.getSharedPreferences("subscription_cards", Context.MODE_PRIVATE)
-    val jsonArray = JSONArray()
-    
-    cards.forEach { card ->
-        val cardJson = JSONObject().apply {
-            put("topic", card.topic)
-            put("displayName", card.displayName)
-            put("jsonParam", card.jsonParam)
-            put("unitSuffix", card.unitSuffix)
-            put("cardStyle", card.cardStyle.name)
-            put("deviceType", card.deviceType.name)
-            put("serverType", card.serverType.name)
-            put("isButtonStyle", card.isButtonStyle)
-            put("isSliderStyle", card.isSliderStyle)
-            put("isPushButtonStyle", card.isPushButtonStyle)
-            put("switchOnValue", card.switchOnValue)
-            put("switchOffValue", card.switchOffValue)
-            put("buttonValue", card.buttonValue)
-            put("sliderMin", card.sliderMin)
-            put("sliderMax", card.sliderMax)
-            put("sliderStep", card.sliderStep)
-        }
-        jsonArray.put(cardJson)
-    }
-    
-    prefs.edit { putString("cards", jsonArray.toString()) }
-}
-
-// 从 SharedPreferences 加载订阅卡片数据
-private fun loadSubscriptionCards(context: Context): List<SubscriptionCard> {
-    val prefs = context.getSharedPreferences("subscription_cards", Context.MODE_PRIVATE)
-    val cardsJson = prefs.getString("cards", "[]") ?: "[]"
-    
-    return try {
-        val jsonArray = JSONArray(cardsJson)
-        List(jsonArray.length()) { index ->
-            val cardJson = jsonArray.getJSONObject(index)
-            SubscriptionCard(
-                topic = cardJson.getString("topic"),
-                displayName = cardJson.getString("displayName"),
-                jsonParam = cardJson.getString("jsonParam"),
-                unitSuffix = cardJson.getString("unitSuffix"),
-                cardStyle = try {
-                    CardStyle.valueOf(cardJson.getString("cardStyle"))
-                } catch (_: Exception) {
-                    CardStyle.MINIMAL
-                },
-                deviceType = try {
-                    DeviceType.valueOf(cardJson.getString("deviceType"))
-                } catch (_: Exception) {
-                    DeviceType.SENSOR
-                },
-                serverType = try {
-                    ServerType.valueOf(cardJson.getString("serverType"))
-                } catch (_: Exception) {
-                    ServerType.EMQX
-                },
-                isButtonStyle = cardJson.optBoolean("isButtonStyle", false),
-                isSliderStyle = cardJson.optBoolean("isSliderStyle", false),
-                isPushButtonStyle = cardJson.optBoolean("isPushButtonStyle", false),
-                switchOnValue = cardJson.optString("switchOnValue", "1"),
-                switchOffValue = cardJson.optString("switchOffValue", "0"),
-                buttonValue = cardJson.optString("buttonValue", "1"),
-                sliderMin = cardJson.optDouble("sliderMin", 0.0).toFloat(),
-                sliderMax = cardJson.optDouble("sliderMax", 100.0).toFloat(),
-                sliderStep = cardJson.optDouble("sliderStep", 1.0).toFloat()
-            )
-        }
-    } catch (_: Exception) {
-        emptyList()
     }
 }
