@@ -23,6 +23,7 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 - 基于 Material 3 的 Compose 原生界面
 - 完整的深色模式支持与 Material You 动态取色，配合自定义全局应用主题
 - 动态圆角风格自定义与自适应主题图标 (Themed App Icons)
+- 接入 GitHub Actions 的 CI/CD 自动化构建，并实现 Release APK 正式版全自动签名
 - MVVM 架构（ViewModel + StateFlow + Channel）
 
 ## 技术栈
@@ -76,20 +77,27 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 ./gradlew :app:compileDebugKotlin
 ```
 
-Release APK 打包：
+### CI/CD 自动化构建 (GitHub Actions)
+
+本项目已配置全自动 GitHub Actions CI/CD 流水线。每次推送代码 (Push) 或提交 Pull Request 到 `main` 分支时，将自动为您执行：
+1. **代码规范检查**：使用原生 `ktlint` 校验全部 Kotlin 代码。
+2. **多环境构建打包**：结合 `--parallel` 等智能缓存深度并发处理，全自动化编译效率极速如飞。
+3. **输出签名版 Release APK 包**：云端会自动读取项目根目录的配置环境和安全证书，全自动为您输出已经通过正式版应用防伪签名的多平台架构独立安装包。
+
+开发者无需在本地痛苦配置环境或手动提取签名密钥，只需静候片刻，便可直接在 GitHub 网站上的本仓库内打开 Actions -> Artifacts 下载开箱即用的带有数字签名的生成大礼包（包含测试版和对应全硬件平台的正式版）。
+
+🚀 **一键自动发布版本 (Tag 触发)**：
+当您想全网发布新的应用版本时，**甚至无需修改任何代码，请直接对仓库打标签 (Tag) 推送到云端**（例如 `git tag v1.6.0 && git push origin --tags`）。这会立刻触发隐藏的发布流水线功能：
+- **热修改内部版本号**：剥离 `v` 解析出内部版本名 `1.6.0`，并提取当天日期作为内部的 VersionCode，免除了手动修改 `build.gradle.kts` 的操作。
+- **自动排版 GitHub Release 下载大厅**：所有的正式版全架构签名 APK 产物会被立刻上传分类，形成一个独立的 Release 下载页面供广大用户无缝点击安装并呈现版本变动日志！
+
+### 本地手动打 Release 签名包：
+
+得益于 `build.gradle.kts` 中挂载好的签名文件，当处于受信任本地环境时只需要一键运行下方指令即可输出带有 Release 正式签名的成品安装包（不再需要在 Android Studio 菜单中繁冗填表）：
 
 ```powershell
 ./gradlew :app:assembleRelease
 ```
-
-Android Studio 打 APK：
-
-1. 打开 `Build`
-2. 选择 `Generate Signed App Bundle or APK...`
-3. 选择 `APK`，不要选 `Android App Bundle`
-4. 选择 `release`
-5. 在 Android Studio 向导中直接选择当前项目目录下的 keystore 文件 `ASLant`
-6. 填入 alias 和密码(均为 `ASLant`)后点击 `Create`
 
 ## 主要页面
 
