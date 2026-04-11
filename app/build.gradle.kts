@@ -42,6 +42,15 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../ASLant")
+            storePassword = "ASLant"
+            keyAlias = "ASLant"
+            keyPassword = "ASLant"
+        }
+    }
+
     buildTypes {
         debug {
             splits {
@@ -52,6 +61,7 @@ android {
         }
 
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
