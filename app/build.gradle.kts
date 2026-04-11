@@ -33,8 +33,8 @@ android {
         applicationId = "compose.iot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20260412
-        versionName = "1.5.0"
+        versionCode = (project.findProperty("VERSION_CODE") as? String)?.toInt() ?: 20260412
+        versionName = (project.findProperty("VERSION_NAME") as? String) ?: "1.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
