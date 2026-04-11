@@ -72,7 +72,7 @@ fun AboutPage(navController: NavController) {
             }
         }
 
-    val currentVersionName = packageInfo?.versionName ?: "1.5.0"
+    val currentVersionName = packageInfo?.versionName ?: "0.0.0"
 
     Box(
         modifier = Modifier.fillMaxSize(),
