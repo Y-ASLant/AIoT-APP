@@ -3,8 +3,6 @@ package compose.iot.ui.theme.function
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -12,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.mqtt.SensorHistoryData
 
 /**
@@ -231,7 +231,7 @@ fun SensorHistoryBottomSheet(
                                 ),
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Clear,
+                                imageVector = TablerIcons.X,
                                 contentDescription = "清除历史",
                                 modifier = Modifier.size(18.dp),
                             )

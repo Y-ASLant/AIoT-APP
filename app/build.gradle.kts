@@ -125,7 +125,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.ui.text.google.fonts)
     lintChecks(libs.androidx.material3.lint)
-    implementation(libs.androidx.material.icons.core)
+    implementation(libs.compose.icons.tabler)
 
     // OkHttp for WebSocket
     implementation(libs.okhttp)

@@ -207,7 +207,7 @@ fun ChangelogPage() {
         compose.iot.ui.components.AppScaffold(
             title = "更新日志",
             navController = null,
-            showBackButton = false
+            showBackButton = false,
         ) { _ ->
             LazyColumn(
                 modifier =

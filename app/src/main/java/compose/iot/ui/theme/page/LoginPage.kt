@@ -6,10 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,10 +16,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.mqtt.MqttManager
 import kotlinx.coroutines.launch
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,7 +110,7 @@ fun LoginPage(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = if (isConnected) Icons.Rounded.CheckCircle else Icons.Rounded.Warning,
+                        imageVector = if (isConnected) TablerIcons.CircleCheck else TablerIcons.AlertTriangle,
                         contentDescription = null,
                         tint = onStatusColor,
                         modifier = Modifier.size(48.dp),
@@ -177,7 +173,7 @@ fun LoginPage(
                         value = serverIp,
                         onValueChange = { serverIp = it },
                         label = { Text("服务器地址") },
-                        leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.MapPin, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                         modifier = Modifier.weight(0.7f),
                         singleLine = true,
@@ -198,7 +194,7 @@ fun LoginPage(
                     value = clientId,
                     onValueChange = { clientId = it },
                     label = { Text("Client ID") },
-                    leadingIcon = { Icon(Icons.Rounded.Face, contentDescription = null) },
+                    leadingIcon = { Icon(TablerIcons.MoodSmile, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -217,7 +213,7 @@ fun LoginPage(
                     value = username,
                     onValueChange = { username = it },
                     label = { Text("用户名") },
-                    leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                    leadingIcon = { Icon(TablerIcons.User, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -228,7 +224,7 @@ fun LoginPage(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("密码") },
-                    leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                    leadingIcon = { Icon(TablerIcons.Lock, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
@@ -292,7 +288,7 @@ fun LoginPage(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 0.dp),
                 ) {
                     Icon(
-                        imageVector = if (isConnected) Icons.Rounded.Close else Icons.Rounded.Add,
+                        imageVector = if (isConnected) TablerIcons.X else TablerIcons.Plus,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                     )

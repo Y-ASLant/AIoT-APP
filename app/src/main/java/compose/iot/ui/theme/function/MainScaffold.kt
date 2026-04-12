@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,11 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.AppState
-import compose.iot.R
 import compose.iot.ui.theme.page.AboutPage
 import compose.iot.ui.theme.page.DashPage
 import compose.iot.ui.theme.page.IndexPage
@@ -50,23 +47,25 @@ fun MainScaffold(
                         Modifier
                             .clip(
                                 androidx.compose.foundation.shape.RoundedCornerShape(
-                                    topStart = compose.iot.AppState.cornerShapeLevel.intValue.let {
-                                        when (it) {
-                                            0 -> 8.dp
-                                            1 -> 12.dp
-                                            2 -> 16.dp
-                                            else -> 8.dp
-                                        }
-                                    },
-                                    topEnd = compose.iot.AppState.cornerShapeLevel.intValue.let {
-                                        when (it) {
-                                            0 -> 8.dp
-                                            1 -> 12.dp
-                                            2 -> 16.dp
-                                            else -> 8.dp
-                                        }
-                                    }
-                                )
+                                    topStart =
+                                        compose.iot.AppState.cornerShapeLevel.intValue.let {
+                                            when (it) {
+                                                0 -> 8.dp
+                                                1 -> 12.dp
+                                                2 -> 16.dp
+                                                else -> 8.dp
+                                            }
+                                        },
+                                    topEnd =
+                                        compose.iot.AppState.cornerShapeLevel.intValue.let {
+                                            when (it) {
+                                                0 -> 8.dp
+                                                1 -> 12.dp
+                                                2 -> 16.dp
+                                                else -> 8.dp
+                                            }
+                                        },
+                                ),
                             ),
                 ) {
                     NavigationBarItem(
@@ -76,10 +75,7 @@ fun MainScaffold(
                         },
                         icon = {
                             Icon(
-                                painter =
-                                    painterResource(
-                                        if (AppState.selectedTab.intValue == 0) R.drawable.bnbfill else R.drawable.bnbline,
-                                    ),
+                                imageVector = TablerIcons.Home,
                                 contentDescription = "首页",
                                 modifier = Modifier.size(24.dp),
                             )
@@ -98,10 +94,7 @@ fun MainScaffold(
                         },
                         icon = {
                             Icon(
-                                painter =
-                                    painterResource(
-                                        if (AppState.selectedTab.intValue == 1) R.drawable.boardfill else R.drawable.boardline,
-                                    ),
+                                imageVector = TablerIcons.Dashboard,
                                 contentDescription = "面板",
                                 modifier = Modifier.size(24.dp),
                             )
@@ -120,7 +113,7 @@ fun MainScaffold(
                         },
                         icon = {
                             Icon(
-                                imageVector = if (AppState.selectedTab.intValue == 2) Icons.Filled.Settings else Icons.Outlined.Settings,
+                                imageVector = TablerIcons.Settings,
                                 contentDescription = "设置",
                                 modifier = Modifier.size(24.dp),
                             )
@@ -139,10 +132,7 @@ fun MainScaffold(
                         },
                         icon = {
                             Icon(
-                                painter =
-                                    painterResource(
-                                        if (AppState.selectedTab.intValue == 3) R.drawable.terminalboxfill else R.drawable.terminalboxline,
-                                    ),
+                                imageVector = TablerIcons.InfoCircle,
                                 contentDescription = "关于",
                                 modifier = Modifier.size(24.dp),
                             )

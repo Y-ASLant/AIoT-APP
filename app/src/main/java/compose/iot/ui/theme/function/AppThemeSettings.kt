@@ -15,8 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,23 +22,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.AppState
-import compose.iot.R
 import compose.iot.data.preferences.PreferencesManager
 import compose.iot.ui.theme.ui.theme.*
 
-// Mock Icons to match design
-private val iconAuto = R.drawable.fluentiot24regular
-private val iconLight = R.drawable.fluentiot24regular
-private val iconDark = R.drawable.fluentiot24regular
-
-enum class AppDarkMode(val value: Int, val title: String, val icon: Int) {
-    Auto(0, "自动", R.drawable.settings),
-    Light(1, "浅色", R.drawable.sun),
-    Dark(2, "深色", R.drawable.moon_stars),
+enum class AppDarkMode(val value: Int, val title: String, val icon: ImageVector) {
+    Auto(0, "自动", TablerIcons.Settings),
+    Light(1, "浅色", TablerIcons.Sun),
+    Dark(2, "深色", TablerIcons.MoonStars),
 }
 
 data class ThemeColorItemData(
@@ -54,14 +48,22 @@ data class ThemeColorItemData(
 val AppThemeColorsList =
     listOf(
         // ID 0 is Dynamic
-        ThemeColorItemData(1, Color(0xFF0061A4), Color(0xFF9ECAFF), Color(0xFFD1E4FF), Color(0xFFD7E2FF)), // Blue
-        ThemeColorItemData(2, Color(0xFF6750A4), Color(0xFFD0BCFF), Color(0xFFEADDFF), Color(0xFFFFD8E4)), // Default M3 Purple
-        ThemeColorItemData(3, Color(0xFF825500), Color(0xFFFFB951), Color(0xFFFFDDB3), Color(0xFFFFDEAC)), // Orange
-        ThemeColorItemData(4, Color(0xFF006C4C), Color(0xFF41E0A0), Color(0xFF89F8C7), Color(0xFFCDE8DF)), // Mint Green
-        ThemeColorItemData(5, Color(0xFF006874), Color(0xFF4FD8EB), Color(0xFF97F0FF), Color(0xFFB1EBF2)), // Aqua
-        ThemeColorItemData(6, Color(0xFF984061), Color(0xFFFFB0C8), Color(0xFFFFD9E2), Color(0xFFFFD9E2)), // Rose
-        ThemeColorItemData(7, Color(0xFF386A20), Color(0xFF9CD67D), Color(0xFFB7F397), Color(0xFFD3E7CD)), // Forest
-        ThemeColorItemData(8, Color(0xFF9C432A), Color(0xFFFFB4A4), Color(0xFFFFDAD3), Color(0xFFFFDBD1)), // Rust
+        // Blue
+        ThemeColorItemData(1, Color(0xFF0061A4), Color(0xFF9ECAFF), Color(0xFFD1E4FF), Color(0xFFD7E2FF)),
+        // Default M3 Purple
+        ThemeColorItemData(2, Color(0xFF6750A4), Color(0xFFD0BCFF), Color(0xFFEADDFF), Color(0xFFFFD8E4)),
+        // Orange
+        ThemeColorItemData(3, Color(0xFF825500), Color(0xFFFFB951), Color(0xFFFFDDB3), Color(0xFFFFDEAC)),
+        // Mint Green
+        ThemeColorItemData(4, Color(0xFF006C4C), Color(0xFF41E0A0), Color(0xFF89F8C7), Color(0xFFCDE8DF)),
+        // Aqua
+        ThemeColorItemData(5, Color(0xFF006874), Color(0xFF4FD8EB), Color(0xFF97F0FF), Color(0xFFB1EBF2)),
+        // Rose
+        ThemeColorItemData(6, Color(0xFF984061), Color(0xFFFFB0C8), Color(0xFFFFD9E2), Color(0xFFFFD9E2)),
+        // Forest
+        ThemeColorItemData(7, Color(0xFF386A20), Color(0xFF9CD67D), Color(0xFFB7F397), Color(0xFFD3E7CD)),
+        // Rust
+        ThemeColorItemData(8, Color(0xFF9C432A), Color(0xFFFFB4A4), Color(0xFFFFDAD3), Color(0xFFFFDBD1)),
     )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +82,7 @@ fun AppThemePage(navController: NavController) {
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            TablerIcons.ChevronLeft,
                             contentDescription = "返回",
                         )
                     }
@@ -156,7 +158,7 @@ fun ExampleThemePreview() {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.fluentiot24regular),
+                        imageVector = TablerIcons.Server,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.primary,
@@ -303,7 +305,7 @@ private fun ThemeColorBox(
             if (selected) {
                 Icon(
                     modifier = Modifier.size(36.dp),
-                    painter = painterResource(id = R.drawable.circle_check_filled),
+                    imageVector = TablerIcons.CircleCheck,
                     contentDescription = null,
                     tint = primaryColor,
                 )
@@ -351,7 +353,7 @@ fun DarkModeItem(
                         Modifier
                             .size(20.dp)
                             .graphicsLayer { rotationZ = if (selected) animateZ else 0f },
-                    painter = painterResource(id = item.icon),
+                    imageVector = item.icon,
                     contentDescription = null,
                     tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current.copy(alpha = 0.5f),
                 )

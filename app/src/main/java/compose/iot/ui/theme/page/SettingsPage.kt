@@ -38,8 +38,8 @@ fun SettingsPage(navController: NavController) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         title = "首选项",
         navController = navController,
-        showBackButton = false, // It's in the bottom nav usually, but wait, if it's navigated from somewhere it might need it. Let's set it to false for now based on current behavior where SettingsPage didn't have a back button.
-        scrollBehavior = scrollBehavior
+        showBackButton = false,
+        scrollBehavior = scrollBehavior,
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

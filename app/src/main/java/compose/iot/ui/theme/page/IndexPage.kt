@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,9 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import kotlinx.coroutines.launch
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.R
 import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
@@ -42,6 +41,7 @@ import compose.iot.ui.theme.function.MqttSubscribeDialog
 import compose.iot.ui.theme.function.SensorHistoryBottomSheet
 import compose.iot.ui.viewmodel.IndexViewModel
 import compose.iot.ui.viewmodel.UiEvent
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -49,8 +49,6 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
-
 
     // 收集一次性事件（统一走 Snackbar）
     LaunchedEffect(Unit) {
@@ -89,7 +87,7 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
-                Icon(Icons.Default.Add, contentDescription = "\u6DFB\u52A0\u76D1\u63A7\u53C2\u6570")
+                Icon(TablerIcons.Plus, contentDescription = "\u6DFB\u52A0\u76D1\u63A7\u53C2\u6570")
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -101,10 +99,11 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
         ) {
-            val pagerState = rememberPagerState(
-                initialPage = if (uiState.selectedDeviceType == DeviceType.SENSOR) 0 else 1,
-                pageCount = { 2 }
-            )
+            val pagerState =
+                rememberPagerState(
+                    initialPage = if (uiState.selectedDeviceType == DeviceType.SENSOR) 0 else 1,
+                    pageCount = { 2 },
+                )
 
             LaunchedEffect(pagerState.currentPage) {
                 val targetType = if (pagerState.currentPage == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
@@ -144,10 +143,10 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
 
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) { page ->
                 val type = if (page == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
-                
+
                 val filteredCards by remember(page, uiState.subscriptionCards) {
                     derivedStateOf {
                         uiState.subscriptionCards.filter {
@@ -155,7 +154,7 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                         }
                     }
                 }
-                
+
                 val pageGridState = rememberLazyStaggeredGridState()
 
                 // ── 设备卡片网格 ──

@@ -15,8 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,11 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import compose.iot.R
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -156,7 +154,7 @@ fun BluetoothPage(navController: NavController) {
         title = "蓝牙设备",
         navController = navController,
         snackbarHostState = snackbarHostState,
-        scrollBehavior = scrollBehavior
+        scrollBehavior = scrollBehavior,
     ) { _ ->
         Column(
             modifier =
@@ -190,7 +188,7 @@ fun BluetoothPage(navController: NavController) {
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.bluetooth),
+                                imageVector = TablerIcons.Bluetooth,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp),
@@ -288,7 +286,7 @@ fun BluetoothPage(navController: NavController) {
                             Text("正在扫描…")
                         } else if (!hasPermission) {
                             Icon(
-                                painter = painterResource(id = R.drawable.bluetooth),
+                                imageVector = TablerIcons.Bluetooth,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
                             )
@@ -296,7 +294,7 @@ fun BluetoothPage(navController: NavController) {
                             Text("授予蓝牙权限")
                         } else {
                             Icon(
-                                painter = painterResource(id = R.drawable.bluetooth),
+                                imageVector = TablerIcons.Bluetooth,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
                             )
@@ -321,7 +319,7 @@ fun BluetoothPage(navController: NavController) {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.bluetooth),
+                            imageVector = TablerIcons.Bluetooth,
                             contentDescription = null,
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.outlineVariant,
@@ -379,7 +377,7 @@ private fun DeviceItem(device: BluetoothDevice) {
                         ),
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.bluetooth),
+                        imageVector = TablerIcons.Bluetooth,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                     )

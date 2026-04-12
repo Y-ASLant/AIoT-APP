@@ -8,13 +8,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -77,7 +72,7 @@ fun VideoStreamPage(navController: NavController) {
                 title = { Text("视频流配置", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(TablerIcons.ChevronLeft, contentDescription = "返回")
                     }
                 },
                 colors =
@@ -133,7 +128,7 @@ fun VideoStreamPage(navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Lock,
+                            imageVector = TablerIcons.Lock,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -170,7 +165,7 @@ fun VideoStreamPage(navController: NavController) {
                         },
                         label = { Text("服务器地址 / IP") },
                         placeholder = { Text("例如: example.com") },
-                        leadingIcon = { Icon(Icons.Rounded.Home, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.Home, contentDescription = null) },
                         modifier = Modifier.weight(0.7f),
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
@@ -200,7 +195,7 @@ fun VideoStreamPage(navController: NavController) {
                     },
                     label = { Text("请求路径 (可选)") },
                     placeholder = { Text("例如: /stream") },
-                    leadingIcon = { Icon(Icons.Rounded.Info, contentDescription = null) },
+                    leadingIcon = { Icon(TablerIcons.InfoCircle, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -226,7 +221,7 @@ fun VideoStreamPage(navController: NavController) {
                             isUrlTested = false
                         },
                         label = { Text("用户名 (可选)") },
-                        leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.User, contentDescription = null) },
                         modifier = Modifier.weight(0.5f),
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
@@ -239,7 +234,7 @@ fun VideoStreamPage(navController: NavController) {
                             isUrlTested = false
                         },
                         label = { Text("密码 (可选)") },
-                        leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.Lock, contentDescription = null) },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.weight(0.5f),
                         singleLine = true,
@@ -306,7 +301,7 @@ fun VideoStreamPage(navController: NavController) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = if (isConnectionSuccessful) Icons.Default.CheckCircle else Icons.Default.Warning,
+                                imageVector = if (isConnectionSuccessful) TablerIcons.CircleCheck else TablerIcons.AlertTriangle,
                                 contentDescription = null,
                                 tint =
                                     if (isConnectionSuccessful) {
@@ -387,7 +382,7 @@ fun VideoStreamPage(navController: NavController) {
                         enabled = !isTestingConnection,
                         shape = MaterialTheme.shapes.extraLarge,
                     ) {
-                        Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = TablerIcons.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("测试连接", fontWeight = FontWeight.Bold)
                     }
@@ -398,7 +393,7 @@ fun VideoStreamPage(navController: NavController) {
                             modifier = Modifier.weight(1f).height(56.dp),
                             shape = MaterialTheme.shapes.extraLarge,
                         ) {
-                            Icon(imageVector = Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Icon(imageVector = TablerIcons.PlayerPlay, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("开始接收", fontWeight = FontWeight.Bold)
                         }
@@ -420,7 +415,7 @@ fun VideoStreamPage(navController: NavController) {
                             modifier = Modifier.weight(1f).height(56.dp),
                             shape = MaterialTheme.shapes.extraLarge,
                         ) {
-                            Icon(imageVector = Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Icon(imageVector = TablerIcons.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("保存配置", fontWeight = FontWeight.Bold)
                         }
@@ -693,7 +688,7 @@ fun VideoStreamView(
                     ),
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = TablerIcons.X,
                 contentDescription = "关闭视频流",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -716,7 +711,7 @@ fun VideoStreamView(
                     ),
         ) {
             Icon(
-                imageVector = Icons.Default.Refresh,
+                imageVector = TablerIcons.Refresh,
                 contentDescription = "请求测试帧",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
             )

@@ -9,6 +9,8 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -21,8 +23,6 @@ import compose.iot.ui.theme.function.MainScaffold
 import compose.iot.ui.theme.page.*
 import compose.iot.ui.theme.page.video.VideoStreamPage
 import compose.iot.ui.theme.ui.theme.AIOT_ComposeTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.S)
@@ -67,9 +67,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val scope = rememberCoroutineScope()
                     val navController = rememberNavController()
-                    
+
                     val currentBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = null)
-                    
+
                     if (!predictiveBackEnabled) {
                         androidx.activity.compose.BackHandler(enabled = navController.previousBackStackEntry != null) {
                             navController.navigateUp()

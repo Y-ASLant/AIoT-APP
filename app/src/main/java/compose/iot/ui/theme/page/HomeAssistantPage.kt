@@ -8,12 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,6 +20,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.navigation.NavController
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
 import compose.iot.mqtt.ServerType
@@ -104,10 +100,10 @@ fun HomeAssistantPage(navController: NavController) {
                         }
                     },
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "刷新设备列表")
+                    Icon(TablerIcons.Refresh, contentDescription = "刷新设备列表")
                 }
             }
-        }
+        },
     ) { _ ->
         AnimatedVisibility(
             visible = isVisible,
@@ -139,7 +135,7 @@ fun HomeAssistantPage(navController: NavController) {
                         onValueChange = { serverUrl = it },
                         label = { Text("服务器地址") },
                         placeholder = { Text("例如: http://homeassistant.local:8123") },
-                        leadingIcon = { Icon(Icons.Rounded.Home, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.Home, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
@@ -150,7 +146,7 @@ fun HomeAssistantPage(navController: NavController) {
                         onValueChange = { accessToken = it },
                         label = { Text("长期访问令牌 (Token)") },
                         visualTransformation = PasswordVisualTransformation(),
-                        leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.Lock, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
@@ -165,7 +161,7 @@ fun HomeAssistantPage(navController: NavController) {
                         },
                         label = { Text("轮询间隔（秒）") },
                         placeholder = { Text("默认为5秒") },
-                        leadingIcon = { Icon(Icons.Rounded.Info, contentDescription = null) },
+                        leadingIcon = { Icon(TablerIcons.InfoCircle, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
@@ -235,7 +231,7 @@ fun HomeAssistantPage(navController: NavController) {
                             )
                         } else {
                             Icon(
-                                imageVector = Icons.Rounded.Check,
+                                imageVector = TablerIcons.Check,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -253,7 +249,7 @@ fun HomeAssistantPage(navController: NavController) {
                 Column(
                     modifier =
                         Modifier
-                            .fillMaxSize()
+                            .fillMaxSize(),
                 ) {
                     // 搜索框 - 减小高度
                     OutlinedTextField(
@@ -277,7 +273,7 @@ fun HomeAssistantPage(navController: NavController) {
                         singleLine = true,
                         leadingIcon = {
                             Icon(
-                                Icons.Default.Search,
+                                TablerIcons.Search,
                                 contentDescription = "搜索",
                                 // 减小图标尺寸
                                 modifier = Modifier.size(20.dp),
@@ -294,7 +290,7 @@ fun HomeAssistantPage(navController: NavController) {
                                     modifier = Modifier.size(40.dp),
                                 ) {
                                     Icon(
-                                        Icons.Default.Clear,
+                                        TablerIcons.X,
                                         contentDescription = "清除",
                                         // 减小图标尺寸
                                         modifier = Modifier.size(18.dp),

@@ -7,8 +7,6 @@ import android.net.NetworkCapabilities
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -22,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import compose.iot.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -83,7 +83,7 @@ fun AboutPage(navController: NavController) {
         navController = navController,
         snackbarHostState = snackbarHostState,
         showBackButton = false,
-        scrollBehavior = scrollBehavior
+        scrollBehavior = scrollBehavior,
     ) { _ ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -146,7 +146,7 @@ fun AboutPage(navController: NavController) {
                         )
                     }
                     Icon(
-                        painter = painterResource(id = R.drawable.github),
+                        imageVector = TablerIcons.BrandGithub,
                         contentDescription = "GitHub",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(24.dp),
@@ -222,7 +222,7 @@ fun AboutPage(navController: NavController) {
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        imageVector = TablerIcons.ChevronRight,
                         contentDescription = "查看更新日志",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
