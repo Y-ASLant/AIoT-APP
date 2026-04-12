@@ -1,5 +1,10 @@
 package compose.iot.mqtt
 
+import com.hivemq.client.mqtt.MqttClient
+import com.hivemq.client.mqtt.datatypes.MqttQos
+import com.hivemq.client.mqtt.lifecycle.MqttClientDisconnectedContext
+import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient
+import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -8,17 +13,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.eclipse.paho.client.mqttv3.*
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import timber.log.Timber
+import java.net.URI
 import java.nio.charset.StandardCharsets
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class MqttManager() {
-    private var mqttClient: MqttClient? = null
-    private var serverUri = "tcp://mqtt.aslant.top:1883" // 默认服务器地址
-    private var clientId = "ComposeApplication" + System.currentTimeMillis() // 默认Client ID
+    private var mqtt3Client: Mqtt3AsyncClient? = null
+    private var mqtt5Client: Mqtt5AsyncClient? = null
+
+    private var serverUri = "tcp://broker.emqx.io:1883" // 默认服务器地址
+    private var clientId = "ComposeApplication_" + UUID.randomUUID().toString().substring(0, 8)
+    private var mqttVersion = 3 // 默认 MQTT 版本为 3.1.1
+
     private val topic = "aslant"
-    private val subscriptionCallbacks = mutableMapOf<String, (String) -> Unit>()
+    private val subscriptionCallbacks = ConcurrentHashMap<String, (String) -> Unit>()
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val clientMutex = Mutex()
 
@@ -30,7 +40,7 @@ class MqttManager() {
     }
 
     fun setClientId(id: String) {
-        clientId = id
+        clientId = id.ifBlank { "ComposeApp_" + UUID.randomUUID().toString().substring(0, 8) }
     }
 
     fun setUsername(username: String?) {
@@ -41,6 +51,12 @@ class MqttManager() {
         this.password = password
     }
 
+    fun setMqttVersion(version: Int) {
+        if (version == 3 || version == 5) {
+            mqttVersion = version
+        }
+    }
+
     fun connect(
         onConnectComplete: () -> Unit = {},
         onError: (String) -> Unit = {},
@@ -48,66 +64,144 @@ class MqttManager() {
         ioScope.launch {
             try {
                 clientMutex.withLock {
-                    if (mqttClient?.isConnected == true) {
-                        withContext(Dispatchers.Main) {
-                            onConnectComplete()
-                        }
+                    if (isConnected()) {
+                        withContext(Dispatchers.Main) { onConnectComplete() }
                         return@withLock
                     }
 
-                    mqttClient = MqttClient(serverUri, clientId, MemoryPersistence())
-                    val options =
-                        MqttConnectOptions().apply {
-                            isCleanSession = true
-                            connectionTimeout = 60
-                            keepAliveInterval = 60
-                            userName = username
-                            password = this@MqttManager.password?.toCharArray()
+                    // 如果有旧的不同版本的客户端并且是连接状态先断开，以防万一
+                    mqtt3Client?.takeIf { it.state.isConnected }?.disconnect()
+                    mqtt5Client?.takeIf { it.state.isConnected }?.disconnect()
+
+                    // 解析 URI
+                    val uriString = if (!serverUri.contains("://")) "tcp://$serverUri" else serverUri
+                    val uri =
+                        try {
+                            URI(uriString)
+                        } catch (e: Exception) {
+                            URI("tcp://broker.emqx.io:1883")
                         }
+                    val host = uri.host ?: "broker.emqx.io"
+                    val port = if (uri.port != -1) uri.port else 1883
 
-                    mqttClient?.setCallback(
-                        object : MqttCallback {
-                            override fun connectionLost(cause: Throwable?) {
-                                Timber.e(cause, "Connection lost")
-                                ioScope.launch {
-                                    withContext(Dispatchers.Main) {
-                                        onError("连接丢失: ${cause?.message ?: "未知错误"}")
-                                    }
+                    val disconnectedListener = { context: MqttClientDisconnectedContext ->
+                        val cause = context.cause
+                        Timber.e(cause, "Connection lost")
+                        ioScope.launch {
+                            withContext(Dispatchers.Main) {
+                                onError("连接丢失: ${cause.message ?: "未知错误"}")
+                            }
+                        }
+                        Unit
+                    }
+
+                    if (mqttVersion == 5) {
+                        mqtt5Client =
+                            MqttClient.builder()
+                                .useMqttVersion5()
+                                .identifier(clientId)
+                                .serverHost(host)
+                                .serverPort(port)
+                                .addDisconnectedListener(disconnectedListener)
+                                .buildAsync()
+
+                        mqtt5Client!!.connectWith()
+                            .cleanStart(true)
+                            .keepAlive(60)
+                            .let { builder ->
+                                if (!username.isNullOrBlank()) {
+                                    builder.simpleAuth()
+                                        .username(username!!)
+                                        .password(password?.toByteArray(StandardCharsets.UTF_8) ?: ByteArray(0))
+                                        .applySimpleAuth()
+                                } else {
+                                    builder
                                 }
                             }
+                            .send()
+                            .whenComplete { _, throwable ->
+                                handleConnectResponse(throwable, onConnectComplete, onError)
+                            }
+                    } else {
+                        mqtt3Client =
+                            MqttClient.builder()
+                                .useMqttVersion3()
+                                .identifier(clientId)
+                                .serverHost(host)
+                                .serverPort(port)
+                                .addDisconnectedListener(disconnectedListener)
+                                .buildAsync()
 
-                            override fun messageArrived(
-                                topic: String?,
-                                message: MqttMessage?,
-                            ) {
-                                message?.payload?.let { payload ->
-                                    val messageStr = String(payload, StandardCharsets.UTF_8)
-                                    topic?.let { subscriptionCallbacks[it] }?.let { callback ->
-                                        ioScope.launch {
-                                            callback(messageStr)
-                                        }
-                                    }
+                        mqtt3Client!!.connectWith()
+                            .cleanSession(true)
+                            .keepAlive(60)
+                            .let { builder ->
+                                if (!username.isNullOrBlank()) {
+                                    builder.simpleAuth()
+                                        .username(username!!)
+                                        .password(password?.toByteArray(StandardCharsets.UTF_8) ?: ByteArray(0))
+                                        .applySimpleAuth()
+                                } else {
+                                    builder
                                 }
                             }
-
-                            override fun deliveryComplete(token: IMqttDeliveryToken?) {
-                                Timber.d("Message delivered")
+                            .send()
+                            .whenComplete { _, throwable ->
+                                handleConnectResponse(throwable, onConnectComplete, onError)
                             }
-                        },
-                    )
-
-                    mqttClient?.connect(options)
-                    mqttClient?.subscribe(topic)
-                }
-
-                withContext(Dispatchers.Main) {
-                    onConnectComplete()
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    onError("连接失败: ${e.message}")
+                    onError("连接异常: ${e.message}")
                 }
             }
+        }
+    }
+
+    private fun handleConnectResponse(
+        throwable: Throwable?,
+        onConnectComplete: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        if (throwable != null) {
+            ioScope.launch(Dispatchers.Main) {
+                onError("连接失败: ${throwable.message}")
+            }
+        } else {
+            ioScope.launch(Dispatchers.Main) {
+                onConnectComplete()
+            }
+            // 在全局 topic 上进行一次底层订阅
+            if (mqttVersion == 5) {
+                mqtt5Client?.subscribeWith()
+                    ?.topicFilter(topic)
+                    ?.callback { publish ->
+                        handleGlobalMessage(publish.topic.toString(), publish.payloadAsBytes)
+                    }
+                    ?.send()
+            } else {
+                mqtt3Client?.subscribeWith()
+                    ?.topicFilter(topic)
+                    ?.callback { publish ->
+                        handleGlobalMessage(publish.topic.toString(), publish.payloadAsBytes)
+                    }
+                    ?.send()
+            }
+        }
+    }
+
+    private fun handleGlobalMessage(
+        publishTopic: String,
+        payload: ByteArray?,
+    ) {
+        if (payload == null) return
+        val messageStr = String(payload, StandardCharsets.UTF_8)
+        val c = subscriptionCallbacks[publishTopic]
+        if (c != null) {
+            ioScope.launch { c(messageStr) }
+        } else if (subscriptionCallbacks[topic] != null) {
+            ioScope.launch { subscriptionCallbacks[topic]!!(messageStr) }
         }
     }
 
@@ -115,11 +209,11 @@ class MqttManager() {
         ioScope.launch {
             try {
                 clientMutex.withLock {
-                    if (mqttClient?.isConnected == true) {
-                        mqttClient?.disconnect()
-                    }
-                    mqttClient?.close()
-                    mqttClient = null
+                    mqtt5Client?.takeIf { it.state.isConnected }?.disconnect()
+                    mqtt5Client = null
+
+                    mqtt3Client?.takeIf { it.state.isConnected }?.disconnect()
+                    mqtt3Client = null
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Disconnect error")
@@ -127,7 +221,9 @@ class MqttManager() {
         }
     }
 
-    fun isConnected(): Boolean = mqttClient?.isConnected == true
+    fun isConnected(): Boolean {
+        return (mqtt5Client?.state?.isConnected == true) || (mqtt3Client?.state?.isConnected == true)
+    }
 
     fun subscribe(
         topic: String,
@@ -135,14 +231,12 @@ class MqttManager() {
     ) {
         ioScope.launch {
             try {
-                if (mqttClient?.isConnected != true) {
+                if (!isConnected()) {
                     connect(
                         onConnectComplete = {
                             performSubscribe(topic, onMessageReceived)
                         },
-                        onError = { _ ->
-                            // 处理连接错误
-                        },
+                        onError = { _ -> },
                     )
                 } else {
                     performSubscribe(topic, onMessageReceived)
@@ -157,19 +251,37 @@ class MqttManager() {
         topic: String,
         onMessageReceived: (String) -> Unit,
     ) {
-        mqttClient?.subscribe(topic, 0) { _, message ->
-            val messageStr = String(message.payload, StandardCharsets.UTF_8)
-            ioScope.launch {
-                onMessageReceived(messageStr)
-            }
-        }
         subscriptionCallbacks[topic] = onMessageReceived
+
+        if (mqttVersion == 5) {
+            mqtt5Client?.subscribeWith()
+                ?.topicFilter(topic)
+                ?.qos(MqttQos.AT_MOST_ONCE)
+                ?.callback { publish ->
+                    val payload = publish.payloadAsBytes
+                    ioScope.launch { onMessageReceived(String(payload, StandardCharsets.UTF_8)) }
+                }
+                ?.send()
+        } else {
+            mqtt3Client?.subscribeWith()
+                ?.topicFilter(topic)
+                ?.qos(MqttQos.AT_MOST_ONCE)
+                ?.callback { publish ->
+                    val payload = publish.payloadAsBytes
+                    ioScope.launch { onMessageReceived(String(payload, StandardCharsets.UTF_8)) }
+                }
+                ?.send()
+        }
     }
 
     fun unsubscribe(topic: String) {
         ioScope.launch {
             try {
-                mqttClient?.unsubscribe(topic)
+                if (mqttVersion == 5) {
+                    mqtt5Client?.unsubscribeWith()?.topicFilter(topic)?.send()
+                } else {
+                    mqtt3Client?.unsubscribeWith()?.topicFilter(topic)?.send()
+                }
                 subscriptionCallbacks.remove(topic)
             } catch (e: Exception) {
                 Timber.e(e, "Unsubscribe error")
@@ -185,7 +297,7 @@ class MqttManager() {
     ) {
         ioScope.launch {
             try {
-                if (mqttClient?.isConnected != true) {
+                if (!isConnected()) {
                     connect(
                         onConnectComplete = {
                             performPublish(topic, message, onComplete, onError)
@@ -213,11 +325,32 @@ class MqttManager() {
     ) {
         ioScope.launch {
             try {
-                val mqttMessage = MqttMessage(message.toByteArray())
-                mqttMessage.qos = 0
-                mqttClient?.publish(topic, mqttMessage)
-                withContext(Dispatchers.Main) {
-                    onComplete()
+                if (mqttVersion == 5) {
+                    mqtt5Client?.publishWith()
+                        ?.topic(topic)
+                        ?.payload(message.toByteArray(StandardCharsets.UTF_8))
+                        ?.qos(MqttQos.AT_MOST_ONCE)
+                        ?.send()
+                        ?.whenComplete { _, throwable ->
+                            if (throwable != null) {
+                                ioScope.launch(Dispatchers.Main) { onError("发布失败: ${throwable.message}") }
+                            } else {
+                                ioScope.launch(Dispatchers.Main) { onComplete() }
+                            }
+                        }
+                } else {
+                    mqtt3Client?.publishWith()
+                        ?.topic(topic)
+                        ?.payload(message.toByteArray(StandardCharsets.UTF_8))
+                        ?.qos(MqttQos.AT_MOST_ONCE)
+                        ?.send()
+                        ?.whenComplete { _, throwable ->
+                            if (throwable != null) {
+                                ioScope.launch(Dispatchers.Main) { onError("发布失败: ${throwable.message}") }
+                            } else {
+                                ioScope.launch(Dispatchers.Main) { onComplete() }
+                            }
+                        }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

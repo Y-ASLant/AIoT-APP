@@ -1,6 +1,5 @@
 package compose.iot.ui.theme.page
 
-import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -20,10 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 import androidx.navigation.NavController
 import compose.iot.mqtt.MqttManager
 import kotlinx.coroutines.launch
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,36 +36,25 @@ fun LoginPage(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // 从SharedPreferences读取保存的配置
-    val sharedPreferences =
-        remember { context.getSharedPreferences("mqtt_settings", Context.MODE_PRIVATE) }
-    var serverIp by remember {
-        mutableStateOf(sharedPreferences.getString("server_ip", "mqtt.aslant.top") ?: "")
-    }
-    var serverPort by remember {
-        mutableStateOf(sharedPreferences.getString("server_port", "1883") ?: "")
-    }
-    var clientId by remember {
-        mutableStateOf(sharedPreferences.getString("client_id", "ComposeApplication") ?: "")
-    }
-    var autoConnect by remember {
-        mutableStateOf(sharedPreferences.getBoolean("auto_connect", false))
-    }
-    var username by remember {
-        mutableStateOf(sharedPreferences.getString("username", "ASLant") ?: "ASLant")
-    }
-    var password by remember { mutableStateOf(sharedPreferences.getString("password", "") ?: "") }
+    val preferencesManager = remember { (context.applicationContext as compose.iot.AiotApp).preferencesManager }
+    var serverIp by remember { mutableStateOf(preferencesManager.mqttServerIp) }
+    var serverPort by remember { mutableStateOf(preferencesManager.mqttServerPort) }
+    var clientId by remember { mutableStateOf(preferencesManager.mqttClientId) }
+    var autoConnect by remember { mutableStateOf(preferencesManager.mqttAutoConnect) }
+    var mqttVersion by remember { mutableStateOf(preferencesManager.mqttVersion) }
+    var username by remember { mutableStateOf(preferencesManager.mqttUsername ?: "ASLant") }
+    var password by remember { mutableStateOf(preferencesManager.mqttPassword ?: "") }
 
     fun connectToMqtt() {
-        // 保存配置
-        sharedPreferences.edit {
-            putString("server_ip", serverIp)
-            putString("server_port", serverPort)
-            putString("client_id", clientId)
-            putString("username", username)
-            putString("password", password)
-        }
+        preferencesManager.mqttServerIp = serverIp
+        preferencesManager.mqttServerPort = serverPort
+        preferencesManager.mqttClientId = clientId
+        preferencesManager.mqttUsername = username
+        preferencesManager.mqttPassword = password
+        preferencesManager.mqttVersion = mqttVersion
+        preferencesManager.mqttAutoConnect = autoConnect
         val serverUri = "tcp://$serverIp:$serverPort"
+        mqttManager.setMqttVersion(mqttVersion)
         mqttManager.setServerUri(serverUri)
         mqttManager.setClientId(clientId)
         mqttManager.setUsername(username)
@@ -82,29 +71,15 @@ fun LoginPage(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("MQTT 连接设置", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController?.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { paddingValues ->
+    compose.iot.ui.components.AppScaffold(
+        title = "MQTT 连接设置",
+        navController = navController,
+        snackbarHostState = snackbarHostState,
+    ) { _ ->
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .padding(horizontal = 24.dp)
                     .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -167,13 +142,32 @@ fun LoginPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    text = "网络凭证",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 4.dp, top = 8.dp),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "网络凭证",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.height(32.dp),
+                    ) {
+                        SegmentedButton(
+                            selected = mqttVersion == 3,
+                            onClick = { mqttVersion = 3 },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                        ) { Text("v3.1.1", style = MaterialTheme.typography.labelMedium) }
+                        SegmentedButton(
+                            selected = mqttVersion == 5,
+                            onClick = { mqttVersion = 5 },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                        ) { Text("v5.0", style = MaterialTheme.typography.labelMedium) }
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -184,6 +178,7 @@ fun LoginPage(
                         onValueChange = { serverIp = it },
                         label = { Text("服务器地址") },
                         leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
+                        keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                         modifier = Modifier.weight(0.7f),
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
@@ -192,7 +187,7 @@ fun LoginPage(
                         value = serverPort,
                         onValueChange = { serverPort = it },
                         label = { Text("端口") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                         modifier = Modifier.weight(0.3f),
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
@@ -204,6 +199,7 @@ fun LoginPage(
                     onValueChange = { clientId = it },
                     label = { Text("Client ID") },
                     leadingIcon = { Icon(Icons.Rounded.Face, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -222,6 +218,7 @@ fun LoginPage(
                     onValueChange = { username = it },
                     label = { Text("用户名") },
                     leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -234,7 +231,7 @@ fun LoginPage(
                     leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
                     visualTransformation = PasswordVisualTransformation(),
                     shape = MaterialTheme.shapes.small,
                 )
@@ -263,7 +260,7 @@ fun LoginPage(
                             checked = autoConnect,
                             onCheckedChange = {
                                 autoConnect = it
-                                sharedPreferences.edit { putBoolean("auto_connect", it) }
+                                preferencesManager.mqttAutoConnect = it
                             },
                         )
                     }

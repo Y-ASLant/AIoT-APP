@@ -3,18 +3,20 @@ package compose.iot.ui.theme.page
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import compose.iot.ui.theme.function.standardEnterTransition
 import compose.iot.ui.theme.function.standardExitTransition
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangelogPage() {
-    var isVisible by remember { mutableStateOf(true) }
+    val isVisible by remember { mutableStateOf(true) }
 
     val changelogItems =
         listOf(
@@ -197,87 +199,123 @@ fun ChangelogPage() {
             ),
         )
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = standardEnterTransition(initialOffsetY = -50),
+        exit = standardExitTransition(targetOffsetY = -50),
     ) {
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = standardEnterTransition(initialOffsetY = -50),
-            exit = standardExitTransition(targetOffsetY = -50),
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top,
+        compose.iot.ui.components.AppScaffold(
+            title = "更新日志",
+            navController = null,
+            showBackButton = false
+        ) { _ ->
+            LazyColumn(
                 modifier =
                     Modifier
-                        .fillMaxSize()
-                        .padding(top = 40.dp),
+                        .fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Spacer(modifier = Modifier.height(60.dp))
+                itemsIndexed(
+                    items = changelogItems,
+                    key = { _, item -> item.version },
+                ) { index, item ->
+                    ChangelogCard(
+                        item = item,
+                        isLatest = index == 0,
+                    )
+                }
 
-                // 标题
-                Text(
-                    text = "更新日志",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 24.dp),
-                )
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
+}
 
-                // 更新日志列表
-                LazyColumn(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+@Composable
+private fun ChangelogCard(
+    item: ChangelogItem,
+    isLatest: Boolean,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (isLatest) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+            ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
+            // 版本号 + badge + 日期
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(changelogItems) { item ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.small,
-                            colors =
-                                CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                ),
+                    Text(
+                        text = "v${item.version}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color =
+                            if (isLatest) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                    )
+                    if (isLatest) {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                            ) {
-                                // 版本号和日期
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = "Version ${item.version}",
-                                        style = MaterialTheme.typography.titleLarge,
-                                    )
-                                    Text(
-                                        text = item.date,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // 更新内容
-                                item.changes.forEach { change ->
-                                    Text(
-                                        text = "• $change",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier.padding(vertical = 2.dp),
-                                    )
-                                }
-                            }
+                            Text(
+                                text = "最新",
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
                         }
                     }
+                }
+                Text(
+                    text = item.date,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
-                    // 底部间距
-                    item {
-                        Spacer(modifier = Modifier.height(32.dp))
-                    }
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 更新内容
+            item.changes.forEach { change ->
+                Row(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "•",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = change,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }

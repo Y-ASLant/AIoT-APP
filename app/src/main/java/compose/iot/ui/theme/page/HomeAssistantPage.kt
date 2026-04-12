@@ -36,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import org.json.JSONObject
+import timber.log.Timber
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -88,43 +88,27 @@ fun HomeAssistantPage(navController: NavController) {
             }
         }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Home Assistant 配置", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        focusManager.clearFocus() // 返回时清除焦点
-                        navController.navigateUp()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                actions = {
-                    if (showDeviceList) {
-                        IconButton(
-                            onClick = {
-                                focusManager.clearFocus() // 刷新时清除焦点
-                                scope.launch {
-                                    fetchHADevices(serverUrl, accessToken) { newDevices ->
-                                        devices = newDevices
-                                    }
-                                }
-                            },
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "刷新设备列表")
+    compose.iot.ui.components.AppScaffold(
+        title = "Home Assistant 配置",
+        navController = navController,
+        snackbarHostState = snackbarHostState,
+        actions = {
+            if (showDeviceList) {
+                IconButton(
+                    onClick = {
+                        focusManager.clearFocus() // 刷新时清除焦点
+                        scope.launch {
+                            fetchHADevices(serverUrl, accessToken) { newDevices ->
+                                devices = newDevices
+                            }
                         }
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { paddingValues ->
+                    },
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "刷新设备列表")
+                }
+            }
+        }
+    ) { _ ->
         AnimatedVisibility(
             visible = isVisible,
             enter = standardEnterTransition(initialOffsetY = -50),
@@ -136,14 +120,8 @@ fun HomeAssistantPage(navController: NavController) {
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(paddingValues)
                             .padding(horizontal = 24.dp)
-                            .verticalScroll(rememberScrollState())
-                            .pointerInput(Unit) {
-                                detectTapGestures(onTap = {
-                                    focusManager.clearFocus()
-                                })
-                            },
+                            .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -276,12 +254,6 @@ fun HomeAssistantPage(navController: NavController) {
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(paddingValues)
-                            .pointerInput(Unit) {
-                                detectTapGestures(onTap = {
-                                    focusManager.clearFocus() // 点击空白处清除焦点
-                                })
-                            },
                 ) {
                     // 搜索框 - 减小高度
                     OutlinedTextField(
@@ -374,6 +346,8 @@ fun HomeAssistantPage(navController: NavController) {
                                 modifier =
                                     Modifier
                                         .fillMaxWidth(),
+                                shape = MaterialTheme.shapes.large,
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                                 onClick = {
                                     focusManager.clearFocus() // 点击卡片时清除焦点
 
@@ -423,130 +397,62 @@ fun HomeAssistantPage(navController: NavController) {
                                             buttonValue = "1",
                                         )
 
-                                    // 从SharedPreferences加载现有卡片
-                                    val prefs = context.getSharedPreferences("subscription_cards", Context.MODE_PRIVATE)
-                                    val cardsJson = prefs.getString("cards", "[]") ?: "[]"
-                                    val existingCards =
-                                        try {
-                                            val jsonArray = JSONArray(cardsJson)
-                                            List(jsonArray.length()) { index ->
-                                                val cardJson = jsonArray.getJSONObject(index)
-                                                SubscriptionCard(
-                                                    topic = cardJson.getString("topic"),
-                                                    displayName = cardJson.getString("displayName"),
-                                                    jsonParam = cardJson.getString("jsonParam"),
-                                                    unitSuffix = cardJson.getString("unitSuffix"),
-                                                    cardStyle =
-                                                        try {
-                                                            CardStyle.valueOf(cardJson.getString("cardStyle"))
-                                                        } catch (_: Exception) {
-                                                            CardStyle.MINIMAL
-                                                        },
-                                                    deviceType =
-                                                        try {
-                                                            DeviceType.valueOf(cardJson.getString("deviceType"))
-                                                        } catch (_: Exception) {
-                                                            DeviceType.SENSOR
-                                                        },
-                                                    serverType =
-                                                        try {
-                                                            ServerType.valueOf(cardJson.getString("serverType"))
-                                                        } catch (_: Exception) {
-                                                            ServerType.EMQX
-                                                        },
-                                                    isButtonStyle = cardJson.optBoolean("isButtonStyle", false),
-                                                    isSliderStyle = cardJson.optBoolean("isSliderStyle", false),
-                                                    isPushButtonStyle = cardJson.optBoolean("isPushButtonStyle", false),
-                                                    switchOnValue = cardJson.optString("switchOnValue", "1"),
-                                                    switchOffValue = cardJson.optString("switchOffValue", "0"),
-                                                    buttonValue = cardJson.optString("buttonValue", "1"),
-                                                    sliderMin = cardJson.optDouble("sliderMin", 0.0).toFloat(),
-                                                    sliderMax = cardJson.optDouble("sliderMax", 100.0).toFloat(),
-                                                    sliderStep = cardJson.optDouble("sliderStep", 1.0).toFloat(),
-                                                )
-                                            }
-                                        } catch (_: Exception) {
-                                            emptyList()
+                                    // 使用 Room Database 保存卡片（需要协程上下文）
+                                    scope.launch {
+                                        val dao = compose.iot.data.room.AppDatabase.getDatabase(context).subscriptionCardDao()
+                                        val existingCards = dao.getAllCards()
+
+                                        // 检查是否已经添加过
+                                        if (existingCards.any { it.topic == card.topic }) {
+                                            snackbarHostState.showSnackbar("该设备已添加", duration = SnackbarDuration.Short)
+                                            return@launch
                                         }
 
-                                    // 检查是否已经添加过
-                                    if (existingCards.any { it.topic == card.topic }) {
-                                        scope.launch { snackbarHostState.showSnackbar("该设备已添加", duration = SnackbarDuration.Short) }
-                                        return@Card
-                                    }
+                                        // 添加新卡片到数据库
+                                        dao.insertCards(listOf(card))
 
-                                    // 添加新卡片
-                                    val newCards = existingCards + card
-                                    val jsonArray = JSONArray()
-                                    newCards.forEach { c ->
-                                        jsonArray.put(
-                                            JSONObject().apply {
-                                                put("topic", c.topic)
-                                                put("displayName", c.displayName)
-                                                put("jsonParam", c.jsonParam)
-                                                put("unitSuffix", c.unitSuffix)
-                                                put("cardStyle", c.cardStyle.name)
-                                                put("deviceType", c.deviceType.name)
-                                                put("serverType", c.serverType.name)
-                                                put("isButtonStyle", c.isButtonStyle)
-                                                put("isSliderStyle", c.isSliderStyle)
-                                                put("isPushButtonStyle", c.isPushButtonStyle)
-                                                put("switchOnValue", c.switchOnValue)
-                                                put("switchOffValue", c.switchOffValue)
-                                                put("buttonValue", c.buttonValue)
-                                                put("sliderMin", c.sliderMin)
-                                                put("sliderMax", c.sliderMax)
-                                                put("sliderStep", c.sliderStep)
-                                            },
-                                        )
-                                    }
+                                        // 如果是执行器，保存当前状态
+                                        if (card.deviceType == DeviceType.ACTUATOR) {
+                                            val cardId = "${card.topic}:${card.jsonParam}"
 
-                                    // 保存到SharedPreferences
-                                    prefs.edit {
-                                        putString("cards", jsonArray.toString())
-                                    }
+                                            when (card.serverType) {
+                                                ServerType.HomeAssistant -> {
+                                                    // 对于Home Assistant设备，使用当前状态
+                                                    val isOn = device.state == "on"
 
-                                    // 如果是执行器，保存当前状态
-                                    if (card.deviceType == DeviceType.ACTUATOR) {
-                                        val cardId = "${card.topic}:${card.jsonParam}"
-
-                                        when (card.serverType) {
-                                            ServerType.HomeAssistant -> {
-                                                // 对于Home Assistant设备，使用当前状态
-                                                val isOn = device.state == "on"
-
-                                                if (card.isSliderStyle) {
-                                                    // 如果是滑块类型，保存到slider_states
-                                                    context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
-                                                        .edit {
-                                                            putFloat(cardId, if (isOn) 1.0f else 0.0f)
-                                                        }
-                                                } else {
-                                                    // 如果是开关类型，保存到switch_states
-                                                    context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
-                                                        .edit {
-                                                            putBoolean(cardId, isOn)
-                                                        }
+                                                    if (card.isSliderStyle) {
+                                                        // 如果是滑块类型，保存到slider_states
+                                                        context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
+                                                            .edit {
+                                                                putFloat(cardId, if (isOn) 1.0f else 0.0f)
+                                                            }
+                                                    } else {
+                                                        // 如果是开关类型，保存到switch_states
+                                                        context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
+                                                            .edit {
+                                                                putBoolean(cardId, isOn)
+                                                            }
+                                                    }
                                                 }
-                                            }
-                                            else -> {
-                                                // 对于其他设备，使用默认值
-                                                if (card.isSliderStyle) {
-                                                    context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
-                                                        .edit {
-                                                            putFloat(cardId, 0.0f)
-                                                        }
-                                                } else {
-                                                    context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
-                                                        .edit {
-                                                            putBoolean(cardId, false)
-                                                        }
+                                                else -> {
+                                                    // 对于其他设备，使用默认值
+                                                    if (card.isSliderStyle) {
+                                                        context.getSharedPreferences("slider_states", Context.MODE_PRIVATE)
+                                                            .edit {
+                                                                putFloat(cardId, 0.0f)
+                                                            }
+                                                    } else {
+                                                        context.getSharedPreferences("switch_states", Context.MODE_PRIVATE)
+                                                            .edit {
+                                                                putBoolean(cardId, false)
+                                                            }
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
 
-                                    scope.launch { snackbarHostState.showSnackbar("已添加设备：${device.friendlyName}", duration = SnackbarDuration.Short) }
+                                        snackbarHostState.showSnackbar("已添加设备：${device.friendlyName}", duration = SnackbarDuration.Short)
+                                    }
                                     // 不再自动返回首页
                                     // navController.navigateUp()
                                 },
@@ -627,19 +533,17 @@ private suspend fun testHAConnection(
                 } else {
                     val errorStream = connection.errorStream
                     val errorMessage = errorStream?.bufferedReader()?.use { it.readText() } ?: "Unknown error"
-                    println("HA连接失败: HTTP $responseCode - $errorMessage")
+                    Timber.w("HA连接失败: HTTP $responseCode - $errorMessage")
                     return@withContext false
                 }
             } catch (e: Exception) {
-                println("HA连接异常: ${e.message}")
-                e.printStackTrace()
+                Timber.e(e, "HA连接异常")
                 return@withContext false
             } finally {
                 connection.disconnect()
             }
         } catch (e: Exception) {
-            println("HA连接异常: ${e.message}")
-            e.printStackTrace()
+            Timber.e(e, "HA连接异常")
             return@withContext false
         }
     }
@@ -684,7 +588,7 @@ private suspend fun fetchHADevices(
                             val entityId = item.getString("entity_id")
                             val attributes = item.getJSONObject("attributes")
                             val friendlyName = attributes.optString("friendly_name", entityId)
-                            val deviceClass = attributes.optString("device_class", null.toString())
+                            val deviceClass = attributes.optString("device_class").takeIf { it.isNotEmpty() }
                             val state = item.getString("state")
 
                             devices.add(HADevice(entityId, friendlyName, state, deviceClass))
@@ -697,14 +601,13 @@ private suspend fun fetchHADevices(
                 } else {
                     val errorStream = connection.errorStream
                     val errorMessage = errorStream?.bufferedReader()?.use { it.readText() } ?: "Unknown error"
-                    println("HA获取设备失败: HTTP $responseCode - $errorMessage")
+                    Timber.w("HA获取设备失败: HTTP $responseCode - $errorMessage")
                     withContext(Dispatchers.Main) {
                         onDevicesFetched(emptyList())
                     }
                 }
             } catch (e: Exception) {
-                println("HA获取设备异常: ${e.message}")
-                e.printStackTrace()
+                Timber.e(e, "HA获取设备异常")
                 withContext(Dispatchers.Main) {
                     onDevicesFetched(emptyList())
                 }
@@ -712,8 +615,7 @@ private suspend fun fetchHADevices(
                 connection.disconnect()
             }
         } catch (e: Exception) {
-            println("HA获取设备异常: ${e.message}")
-            e.printStackTrace()
+            Timber.e(e, "HA获取设备异常")
             withContext(Dispatchers.Main) {
                 onDevicesFetched(emptyList())
             }

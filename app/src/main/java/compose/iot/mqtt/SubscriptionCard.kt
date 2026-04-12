@@ -1,5 +1,6 @@
 package compose.iot.mqtt
 
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 
 enum class DeviceType {
@@ -12,6 +13,7 @@ enum class ServerType {
     HomeAssistant, // Home Assistant 服务器
 }
 
+@Immutable
 @Entity(tableName = "subscription_cards", primaryKeys = ["topic", "jsonParam"])
 data class SubscriptionCard(
     // 对于EMQX是MQTT主题，对于Home Assistant是实体ID

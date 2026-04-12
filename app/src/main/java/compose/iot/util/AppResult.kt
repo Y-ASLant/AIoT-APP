@@ -1,6 +1,7 @@
 package compose.iot.util
 
 import timber.log.Timber
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 统一错误处理封装
@@ -42,6 +43,7 @@ inline fun <T> AppResult<T>.onError(action: (String, Throwable?) -> Unit): AppRe
 
 /**
  * 安全执行代码块，自动捕获异常并记录日志
+ * 注意：CancellationException 会被重新抛出以保证协程取消机制正常工作
  */
 inline fun <T> safeCall(
     errorMessage: String = "操作失败",
@@ -49,6 +51,8 @@ inline fun <T> safeCall(
 ): AppResult<T> =
     try {
         AppResult.Success(block())
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Timber.e(e, errorMessage)
         AppResult.Error(e.message ?: errorMessage, e)

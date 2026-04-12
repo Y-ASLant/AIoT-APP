@@ -1,6 +1,7 @@
 package compose.iot.mqtt
 
 import android.annotation.SuppressLint
+import androidx.compose.runtime.Immutable
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -11,6 +12,7 @@ import java.util.Locale
  * @param timestamp 时间戳
  * @param unitSuffix 单位后缀
  */
+@Immutable
 data class SensorHistoryData(
     val value: String,
     val timestamp: Long = System.currentTimeMillis(),

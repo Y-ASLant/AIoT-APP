@@ -20,22 +20,22 @@ fun MqttSubscribeDialog(
     onDelete: (() -> Unit)? = null,
     editingCard: SubscriptionCard? = null,
 ) {
-    var topic by remember { mutableStateOf(editingCard?.topic ?: "") }
-    var displayName by remember { mutableStateOf(editingCard?.displayName ?: "") }
-    var jsonParam by remember { mutableStateOf(editingCard?.jsonParam ?: "") }
-    var unitSuffix by remember { mutableStateOf(editingCard?.unitSuffix ?: "") }
-    var cardStyle by remember { mutableStateOf(editingCard?.cardStyle ?: CardStyle.FILLED) }
-    var deviceType by remember { mutableStateOf(editingCard?.deviceType ?: DeviceType.SENSOR) }
-    var serverType by remember { mutableStateOf(editingCard?.serverType ?: ServerType.EMQX) }
-    var isButtonStyle by remember { mutableStateOf(editingCard?.isButtonStyle == true) }
-    var isSliderStyle by remember { mutableStateOf(editingCard?.isSliderStyle == true) }
-    var isPushButtonStyle by remember { mutableStateOf(editingCard?.isPushButtonStyle == true) }
-    var switchOnValue by remember { mutableStateOf(editingCard?.switchOnValue ?: "1") }
-    var switchOffValue by remember { mutableStateOf(editingCard?.switchOffValue ?: "0") }
-    var buttonValue by remember { mutableStateOf(editingCard?.buttonValue ?: "1") }
-    var sliderMin by remember { mutableStateOf(editingCard?.sliderMin?.toString() ?: "0") }
-    var sliderMax by remember { mutableStateOf(editingCard?.sliderMax?.toString() ?: "100") }
-    var sliderStep by remember { mutableStateOf(editingCard?.sliderStep?.toString() ?: "1") }
+    var topic by remember(editingCard) { mutableStateOf(editingCard?.topic ?: "") }
+    var displayName by remember(editingCard) { mutableStateOf(editingCard?.displayName ?: "") }
+    var jsonParam by remember(editingCard) { mutableStateOf(editingCard?.jsonParam ?: "") }
+    var unitSuffix by remember(editingCard) { mutableStateOf(editingCard?.unitSuffix ?: "") }
+    var cardStyle by remember(editingCard) { mutableStateOf(editingCard?.cardStyle ?: CardStyle.FILLED) }
+    var deviceType by remember(editingCard) { mutableStateOf(editingCard?.deviceType ?: DeviceType.SENSOR) }
+    var serverType by remember(editingCard) { mutableStateOf(editingCard?.serverType ?: ServerType.EMQX) }
+    var isButtonStyle by remember(editingCard) { mutableStateOf(editingCard?.isButtonStyle == true) }
+    var isSliderStyle by remember(editingCard) { mutableStateOf(editingCard?.isSliderStyle == true) }
+    var isPushButtonStyle by remember(editingCard) { mutableStateOf(editingCard?.isPushButtonStyle == true) }
+    var switchOnValue by remember(editingCard) { mutableStateOf(editingCard?.switchOnValue ?: "1") }
+    var switchOffValue by remember(editingCard) { mutableStateOf(editingCard?.switchOffValue ?: "0") }
+    var buttonValue by remember(editingCard) { mutableStateOf(editingCard?.buttonValue ?: "1") }
+    var sliderMin by remember(editingCard) { mutableStateOf(editingCard?.sliderMin?.toString() ?: "0") }
+    var sliderMax by remember(editingCard) { mutableStateOf(editingCard?.sliderMax?.toString() ?: "100") }
+    var sliderStep by remember(editingCard) { mutableStateOf(editingCard?.sliderStep?.toString() ?: "1") }
 
     AlertDialog(
         onDismissRequest = onDismissRequest,

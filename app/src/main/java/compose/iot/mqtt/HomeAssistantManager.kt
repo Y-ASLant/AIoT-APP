@@ -4,7 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -13,16 +13,17 @@ import org.json.JSONObject
 import timber.log.Timber
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 class HomeAssistantManager(private val context: Context) {
     private var serverUrl: String = ""
     private var accessToken: String = ""
     private val scope = CoroutineScope(Dispatchers.IO + Job())
-    private val pollingJobs = mutableMapOf<String, Job>()
-    private var pollingInterval: Long = 500 // 默认0.5秒
+    private val pollingJobs = ConcurrentHashMap<String, Job>()
+    private var pollingInterval: Long = 5000 // 默认5秒
 
-    // 添加状态变化监听器集合
-    private val stateChangeListeners = mutableMapOf<String, MutableList<(String, String) -> Unit>>()
+    private val stateChangeListeners = ConcurrentHashMap<String, CopyOnWriteArrayList<(String, String) -> Unit>>()
 
     // 添加状态变化监听器
     fun addStateChangeListener(
@@ -30,7 +31,7 @@ class HomeAssistantManager(private val context: Context) {
         listener: (String, String) -> Unit,
     ) {
         if (!stateChangeListeners.containsKey(entityId)) {
-            stateChangeListeners[entityId] = mutableListOf()
+            stateChangeListeners[entityId] = CopyOnWriteArrayList()
         }
         stateChangeListeners[entityId]?.add(listener)
     }
@@ -244,7 +245,7 @@ class HomeAssistantManager(private val context: Context) {
         pollingJobs.values.forEach { it.cancel() }
         pollingJobs.clear()
         stateChangeListeners.clear()
-        scope.cancel()
+        scope.coroutineContext.cancelChildren()
     }
 
     fun unsubscribe(entityId: String) {
@@ -266,9 +267,8 @@ class HomeAssistantManager(private val context: Context) {
             return
         }
 
-        // 为每个请求创建新的 scope
-        val requestScope = CoroutineScope(Dispatchers.IO + Job())
-        requestScope.launch {
+        // 使用类的统一 scope，受 disconnect() 管理
+        scope.launch {
             try {
                 val url = URL("$serverUrl/api/services/$domain/$service")
                 val connection =
@@ -321,8 +321,6 @@ class HomeAssistantManager(private val context: Context) {
                 withContext(Dispatchers.Main) {
                     onError(e.message ?: "Unknown error")
                 }
-            } finally {
-                requestScope.cancel()
             }
         }
     }

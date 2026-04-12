@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -75,7 +76,7 @@ fun SensorHistoryBottomSheet(
                             .padding(16.dp),
                 ) {
                     // 统计数据行
-                    val (avgValue, minValue, maxValue) = SensorHistoryData.getStatistics(historyData)
+                    val (avgValue, minValue, maxValue) = remember(historyData) { SensorHistoryData.getStatistics(historyData) }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,

@@ -20,8 +20,6 @@ internal class DeviceSubscriptionController(
     private val getCards: () -> List<SubscriptionCard>,
     private val updateCardValue: (String, String) -> Unit,
 ) {
-    private val haStateListeners = mutableMapOf<String, (String, String) -> Unit>()
-
     fun subscribeAll() {
         Timber.d("开始订阅所有主题")
         getCards().map { it.topic }.distinct().forEach(::subscribeTopic)
@@ -39,7 +37,6 @@ internal class DeviceSubscriptionController(
     fun unsubscribeTopic(topic: String) {
         if (topic.startsWith("homeassistant/")) {
             val entityId = topic.removePrefix("homeassistant/").removeSuffix("/state")
-            unregisterHaStateListener(entityId)
             haManager.unsubscribe(entityId)
         } else {
             mqttManager.unsubscribe(topic)
@@ -47,18 +44,12 @@ internal class DeviceSubscriptionController(
     }
 
     fun dispose() {
-        getCards()
-            .filter { it.topic.startsWith("homeassistant/") }
-            .map { it.topic.removePrefix("homeassistant/").removeSuffix("/state") }
-            .distinct()
-            .forEach(::unregisterHaStateListener)
         haManager.disconnect()
     }
 
     private fun subscribeHomeAssistantTopic(topic: String) {
         Timber.d("发现 HA 主题，使用 HA 管理器订阅")
         val entityId = topic.removePrefix("homeassistant/").removeSuffix("/state")
-        registerHaStateListener(entityId)
 
         scope.launch {
             try {
@@ -125,23 +116,6 @@ internal class DeviceSubscriptionController(
                 }
         } catch (e: Exception) {
             Timber.e(e, errorMessage)
-        }
-    }
-
-    private fun registerHaStateListener(entityId: String) {
-        val stateListener =
-            haStateListeners.getOrPut(entityId) {
-                { cardId, newState ->
-                    Timber.d("收到状态变化通知: $cardId = $newState")
-                    updateCardValue(cardId, newState)
-                }
-            }
-        haManager.addStateChangeListener(entityId, stateListener)
-    }
-
-    private fun unregisterHaStateListener(entityId: String) {
-        haStateListeners.remove(entityId)?.let { listener ->
-            haManager.removeStateChangeListener(entityId, listener)
         }
     }
 }

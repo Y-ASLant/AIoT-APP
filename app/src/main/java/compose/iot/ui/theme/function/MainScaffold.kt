@@ -31,7 +31,6 @@ import compose.iot.ui.theme.page.DashPage
 import compose.iot.ui.theme.page.IndexPage
 import compose.iot.ui.theme.page.SettingsPage
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * 应用主框架 — 采用 M3 Scaffold + NavigationBar
@@ -49,12 +48,31 @@ fun MainScaffold(
                 NavigationBar(
                     modifier =
                         Modifier
-                            .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)),
+                            .clip(
+                                androidx.compose.foundation.shape.RoundedCornerShape(
+                                    topStart = compose.iot.AppState.cornerShapeLevel.intValue.let {
+                                        when (it) {
+                                            0 -> 8.dp
+                                            1 -> 12.dp
+                                            2 -> 16.dp
+                                            else -> 8.dp
+                                        }
+                                    },
+                                    topEnd = compose.iot.AppState.cornerShapeLevel.intValue.let {
+                                        when (it) {
+                                            0 -> 8.dp
+                                            1 -> 12.dp
+                                            2 -> 16.dp
+                                            else -> 8.dp
+                                        }
+                                    }
+                                )
+                            ),
                 ) {
                     NavigationBarItem(
                         selected = AppState.selectedTab.intValue == 0,
                         onClick = {
-                            scope.launch { AppState.selectedTab.intValue = 0 }
+                            AppState.selectedTab.intValue = 0
                         },
                         icon = {
                             Icon(
@@ -76,7 +94,7 @@ fun MainScaffold(
                     NavigationBarItem(
                         selected = AppState.selectedTab.intValue == 1,
                         onClick = {
-                            scope.launch { AppState.selectedTab.intValue = 1 }
+                            AppState.selectedTab.intValue = 1
                         },
                         icon = {
                             Icon(
@@ -98,7 +116,7 @@ fun MainScaffold(
                     NavigationBarItem(
                         selected = AppState.selectedTab.intValue == 2,
                         onClick = {
-                            scope.launch { AppState.selectedTab.intValue = 2 }
+                            AppState.selectedTab.intValue = 2
                         },
                         icon = {
                             Icon(
@@ -117,7 +135,7 @@ fun MainScaffold(
                     NavigationBarItem(
                         selected = AppState.selectedTab.intValue == 3,
                         onClick = {
-                            scope.launch { AppState.selectedTab.intValue = 3 }
+                            AppState.selectedTab.intValue = 3
                         },
                         icon = {
                             Icon(
@@ -146,7 +164,7 @@ fun MainScaffold(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(bottom = innerPadding.calculateBottomPadding()),
             transitionSpec = {
                 fadeIn(animationSpec = tween(200)) togetherWith
                     fadeOut(animationSpec = tween(200))

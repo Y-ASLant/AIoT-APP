@@ -38,6 +38,7 @@ class AiotApp : Application() {
         // 检查是否需要自动连接 MQTT
         if (preferencesManager.mqttAutoConnect) {
             val serverUri = "tcp://${preferencesManager.mqttServerIp}:${preferencesManager.mqttServerPort}"
+            mqttManager.setMqttVersion(preferencesManager.mqttVersion)
             mqttManager.setServerUri(serverUri)
             mqttManager.setClientId(preferencesManager.mqttClientId)
             mqttManager.setUsername(preferencesManager.mqttUsername)

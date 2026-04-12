@@ -64,11 +64,12 @@
     public static int wtf(...);
 }
 
-# 保留 MQTT 相关类
--keep class org.eclipse.paho.client.mqttv3.** { *; }
--keep class org.eclipse.paho.android.service.** { *; }
--dontwarn org.eclipse.paho.client.mqttv3.**
--dontwarn org.eclipse.paho.android.service.**
+# 保留 HiveMQ 和被引用的可选库
+-dontwarn com.hivemq.client.**
+-dontwarn reactor.**
+-dontwarn org.jctools.**
+-dontwarn io.netty.**
+-dontwarn org.slf4j.**
 
 # 保留 META-INF 服务文件
 -keep,allowobfuscation class * implements com.android.tools.lint.client.api.IssueRegistry

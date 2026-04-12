@@ -4,24 +4,25 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import compose.iot.R
-import compose.iot.ui.theme.function.standardEnterTransition
-import compose.iot.ui.theme.function.standardExitTransition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,11 +32,11 @@ import java.net.URL
 import kotlin.math.log10
 import kotlin.math.pow
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutPage(navController: NavController) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val isVisible by remember { mutableStateOf(true) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -74,239 +75,247 @@ fun AboutPage(navController: NavController) {
 
     val currentVersionName = packageInfo?.versionName ?: "0.0.0"
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = standardEnterTransition(initialOffsetY = -50),
-            exit = standardExitTransition(targetOffsetY = -50),
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    compose.iot.ui.components.AppScaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        title = "关于",
+        navController = navController,
+        snackbarHostState = snackbarHostState,
+        showBackButton = false,
+        scrollBehavior = scrollBehavior
+    ) { _ ->
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top,
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 应用标题
+            Text(
+                text = "AIOT Compose",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = "物联网数据监控平台",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
+            )
+
+            // 作者信息卡片
+            Card(
                 modifier =
                     Modifier
-                        .padding(top = 40.dp)
-                        .verticalScroll(scrollState),
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                shape = MaterialTheme.shapes.large,
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://github.com/Y-ASLant/AIoT-APP".toUri())
+                    context.startActivity(intent)
+                },
             ) {
-                Spacer(modifier = Modifier.height(60.dp))
-
-                // 应用标题
-                Text(
-                    text = "AIOT Compose",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = "物联网数据监控平台",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
-                )
-
-                // 作者信息卡片
-                Card(
+                Row(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                    shape = MaterialTheme.shapes.small,
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
-                        ),
+                            .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                    ) {
+                    Column {
                         Text(
-                            text = "App作者",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "作者：ASLant\n专业：物联网工程技术\n学校：山东工程职业技术大学",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 关于软件卡片
-                Card(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                    shape = MaterialTheme.shapes.small,
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        ),
-                    onClick = {
-                        navController.navigate("changelog") {
-                            launchSingleTop = true
-                        }
-                    },
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                    ) {
-                        Text(
-                            text = "关于此工具",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "• ✨使用 Jetpack Compose + Kotlin 开发\n• 💫UI 采用 Material Design 3 设计语言\n• 🍀支持 MQTT 和 Home Assistant 协议\n• 🔍支持实时数据监控和可视化\n• 🗼提供丰富的Card自定义选项\n• 🛠️支持手动添加传感/执行器设备\n• 🎉点击进入历史版本更新记录",
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            FilledTonalIconButton(
-                                onClick = {
-                                    val intent =
-                                        Intent(
-                                            Intent.ACTION_VIEW,
-                                            "https://aslant.top/Cloud/OneDrive/?login=ASLant".toUri(),
-                                        )
-                                    context.startActivity(intent)
-                                },
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.upload),
-                                    contentDescription = "云盘",
-                                    modifier = Modifier.size(26.dp),
-                                )
-                            }
-                            FilledTonalIconButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, "https://aslant.top".toUri())
-                                    context.startActivity(intent)
-                                },
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.data),
-                                    contentDescription = "主页",
-                                    modifier = Modifier.size(28.dp),
-                                )
-                            }
-                            FilledTonalIconButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, "https://aslant.top/Cloud/".toUri())
-                                    context.startActivity(intent)
-                                },
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.download),
-                                    contentDescription = "下载",
-                                    modifier = Modifier.size(26.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // 版本信息卡片
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Card(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                    shape = MaterialTheme.shapes.small,
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        ),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = "AIOT Version $currentVersionName",
+                            text = "作者：ASLant",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "更新日期: $versionCode · © ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)} ASLant",
+                            text = "github.com/Y-ASLant/AIoT-APP",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                         )
+                    }
+                    Icon(
+                        painter = painterResource(id = R.drawable.github),
+                        contentDescription = "GitHub",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                        FilledTonalButton(
-                            onClick = {
-                                if (!isCheckingUpdate) {
-                                    isCheckingUpdate = true
-                                    if (!isNetworkAvailable(context)) {
-                                        updateMessage = "网络连接不可用，请检查网络设置"
-                                        isCheckingUpdate = false
-                                        return@FilledTonalButton
-                                    }
+            // 关于软件卡片
+            Card(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                shape = MaterialTheme.shapes.large,
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                ) {
+                    Text(
+                        text = "关于此工具",
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text =
+                            "✨ Jetpack Compose + Kotlin\n" +
+                                "💫 Material Design 3\n" +
+                                "🍀 MQTT & Home Assistant\n" +
+                                "🔍 实时数据监控与可视化\n" +
+                                "🗼 丰富的 Card 自定义选项\n" +
+                                "🛠️ 手动添加传感 / 执行器设备",
+                        style = MaterialTheme.typography.bodyMedium,
+                        lineHeight = 24.sp,
+                    )
+                }
+            }
 
-                                    coroutineScope.launch {
-                                        try {
-                                            Timber.d("开始检查更新，当前版本: $currentVersionName")
-                                            val result = checkForUpdates(currentVersionName, currentVersionCode)
-                                            if (result != null) {
-                                                Timber.d("发现新版本: ${result.versionName}")
-                                                updateInfo = result
-                                                showUpdateDialog = true
-                                            } else {
-                                                Timber.d("没有发现新版本")
-                                                updateMessage = "已是最新版本"
-                                            }
-                                        } catch (e: Exception) {
-                                            Timber.e(e, "检查更新失败")
-                                            updateMessage = "检查更新失败: ${e.message ?: "未知错误"}"
-                                        } finally {
-                                            isCheckingUpdate = false
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 更新日志卡片
+            Card(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                shape = MaterialTheme.shapes.large,
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+                onClick = {
+                    navController.navigate("changelog") {
+                        launchSingleTop = true
+                    }
+                },
+            ) {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "更新日志",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "查看更新日志",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            // 版本信息卡片
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Card(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                shape = MaterialTheme.shapes.large,
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "AIOT Version $currentVersionName",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "更新日期: $versionCode · © ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)} ASLant",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FilledTonalButton(
+                        onClick = {
+                            if (!isCheckingUpdate) {
+                                isCheckingUpdate = true
+                                if (!isNetworkAvailable(context)) {
+                                    updateMessage = "网络连接不可用，请检查网络设置"
+                                    isCheckingUpdate = false
+                                    return@FilledTonalButton
+                                }
+
+                                coroutineScope.launch {
+                                    try {
+                                        Timber.d("开始检查更新，当前版本: $currentVersionName")
+                                        val result = checkForUpdates(currentVersionName, currentVersionCode)
+                                        if (result != null) {
+                                            Timber.d("发现新版本: ${result.versionName}")
+                                            updateInfo = result
+                                            showUpdateDialog = true
+                                        } else {
+                                            Timber.d("没有发现新版本")
+                                            updateMessage = "已是最新版本"
                                         }
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "检查更新失败")
+                                        updateMessage = "检查更新失败: ${e.message ?: "未知错误"}"
+                                    } finally {
+                                        isCheckingUpdate = false
                                     }
                                 }
-                            },
-                            enabled = !isCheckingUpdate,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            if (isCheckingUpdate) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.download),
-                                    contentDescription = "检查更新",
-                                    modifier = Modifier.size(18.dp),
-                                )
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isCheckingUpdate) "正在检查…" else "检查更新")
+                        },
+                        enabled = !isCheckingUpdate,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (isCheckingUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = R.drawable.download),
+                                contentDescription = "检查更新",
+                                modifier = Modifier.size(18.dp),
+                            )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isCheckingUpdate) "正在检查…" else "检查更新")
                     }
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 

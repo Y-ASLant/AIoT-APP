@@ -31,12 +31,33 @@ class PreferencesManager(private val context: Context) {
 
     // region ── MQTT 配置 ──
 
-    val mqttAutoConnect: Boolean get() = mqttPrefs.getBoolean("auto_connect", false)
-    val mqttServerIp: String get() = mqttPrefs.getString("server_ip", "mqtt.aslant.top") ?: "mqtt.aslant.top"
-    val mqttServerPort: String get() = mqttPrefs.getString("server_port", "1883") ?: "1883"
-    val mqttClientId: String get() = mqttPrefs.getString("client_id", "ComposeApplication") ?: "ComposeApplication"
-    val mqttUsername: String? get() = mqttPrefs.getString("username", null)
-    val mqttPassword: String? get() = mqttPrefs.getString("password", null)
+    var mqttAutoConnect: Boolean
+        get() = mqttPrefs.getBoolean("auto_connect", false)
+        set(value) = mqttPrefs.edit { putBoolean("auto_connect", value) }
+
+    var mqttVersion: Int
+        get() = mqttPrefs.getInt("mqtt_version", 3)
+        set(value) = mqttPrefs.edit { putInt("mqtt_version", value) }
+
+    var mqttServerIp: String
+        get() = mqttPrefs.getString("server_ip", "broker.emqx.io") ?: "broker.emqx.io"
+        set(value) = mqttPrefs.edit { putString("server_ip", value) }
+
+    var mqttServerPort: String
+        get() = mqttPrefs.getString("server_port", "1883") ?: "1883"
+        set(value) = mqttPrefs.edit { putString("server_port", value) }
+
+    var mqttClientId: String
+        get() = mqttPrefs.getString("client_id", "ComposeApplication") ?: "ComposeApplication"
+        set(value) = mqttPrefs.edit { putString("client_id", value) }
+
+    var mqttUsername: String?
+        get() = mqttPrefs.getString("username", "ASLant")
+        set(value) = mqttPrefs.edit { putString("username", value) }
+
+    var mqttPassword: String?
+        get() = mqttPrefs.getString("password", "")
+        set(value) = mqttPrefs.edit { putString("password", value) }
 
     // endregion
 
@@ -81,6 +102,24 @@ class PreferencesManager(private val context: Context) {
         get() = appSettingsPrefs.getBoolean("app_keep_alive", false)
         set(value) {
             appSettingsPrefs.edit { putBoolean("app_keep_alive", value) }
+        }
+
+    var predictiveBackEnabled: Boolean
+        get() = appSettingsPrefs.getBoolean("predictive_back", true)
+        set(value) {
+            appSettingsPrefs.edit { putBoolean("predictive_back", value) }
+        }
+
+    var darkMode: Int
+        get() = appSettingsPrefs.getInt("dark_mode", 0)
+        set(value) {
+            appSettingsPrefs.edit { putInt("dark_mode", value) }
+        }
+
+    var themeColor: Int
+        get() = appSettingsPrefs.getInt("theme_color", 0)
+        set(value) {
+            appSettingsPrefs.edit { putInt("theme_color", value) }
         }
 
     // endregion

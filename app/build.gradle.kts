@@ -136,8 +136,7 @@ dependencies {
     implementation(libs.timber)
 
     // MQTT Client
-    implementation(libs.org.eclipse.paho.client.mqttv3)
-    implementation(libs.org.eclipse.paho.android.service)
+    implementation(libs.hivemq.mqtt.client)
 
     // Room
     implementation(libs.room.runtime)

@@ -6,17 +6,23 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import compose.iot.mqtt.MqttForegroundService
-import compose.iot.ui.theme.function.Background
+import compose.iot.ui.theme.function.AppThemePage
 import compose.iot.ui.theme.function.MainScaffold
 import compose.iot.ui.theme.page.*
 import compose.iot.ui.theme.page.video.VideoStreamPage
 import compose.iot.ui.theme.ui.theme.AIOT_ComposeTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.S)
@@ -31,6 +37,8 @@ class MainActivity : ComponentActivity() {
         // 初始化界面状态
         AppState.cornerShapeLevel.intValue = prefs.cornerShapeLevel
         AppState.appKeepAlive.value = prefs.appKeepAlive
+        AppState.themeColor.intValue = prefs.themeColor
+        AppState.predictiveBackEnabled.value = prefs.predictiveBackEnabled
 
         if (prefs.appKeepAlive) {
             MqttForegroundService.start(this)
@@ -50,26 +58,46 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            AIOT_ComposeTheme {
-                Background()
-                val scope = rememberCoroutineScope()
-                val navController = rememberNavController()
+            val predictiveBackEnabled by AppState.predictiveBackEnabled
 
-                NavHost(navController = navController, startDestination = "index") {
-                    composable("index") {
-                        MainScaffold(scope, navController)
+            AIOT_ComposeTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    val scope = rememberCoroutineScope()
+                    val navController = rememberNavController()
+                    
+                    val currentBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = null)
+                    
+                    if (!predictiveBackEnabled) {
+                        androidx.activity.compose.BackHandler(enabled = navController.previousBackStackEntry != null) {
+                            navController.navigateUp()
+                        }
                     }
-                    composable("login") {
-                        LoginPage(navController, mqttManager)
-                    }
-                    composable("homeassistant") {
-                        HomeAssistantPage(navController)
-                    }
-                    composable("changelog") {
-                        ChangelogPage()
-                    }
-                    composable("video_stream") {
-                        VideoStreamPage(navController)
+
+                    NavHost(navController = navController, startDestination = "index") {
+                        composable("index") {
+                            MainScaffold(scope, navController)
+                        }
+                        composable("login") {
+                            LoginPage(navController, mqttManager)
+                        }
+                        composable("homeassistant") {
+                            HomeAssistantPage(navController)
+                        }
+                        composable("changelog") {
+                            ChangelogPage()
+                        }
+                        composable("video_stream") {
+                            VideoStreamPage(navController)
+                        }
+                        composable("bluetooth") {
+                            BluetoothPage(navController)
+                        }
+                        composable("app_theme") {
+                            AppThemePage(navController)
+                        }
                     }
                 }
             }

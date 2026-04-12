@@ -73,7 +73,7 @@ fun VideoStreamPage(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text("视频流配置", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -81,7 +81,7 @@ fun VideoStreamPage(navController: NavController) {
                     }
                 },
                 colors =
-                    TopAppBarDefaults.topAppBarColors(
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = MaterialTheme.colorScheme.onSurface,
                     ),
@@ -487,7 +487,9 @@ fun VideoStreamView(
                             val imageBytes = Base64.decode(base64Data, Base64.DEFAULT)
                             val decodedBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                             if (decodedBitmap != null) {
+                                val oldBitmap = bitmap
                                 bitmap = decodedBitmap
+                                oldBitmap?.recycle()
                                 return
                             }
                         }
@@ -503,7 +505,9 @@ fun VideoStreamView(
                                 val imageBytes = Base64.decode(base64Data, Base64.DEFAULT)
                                 val decodedBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                                 if (decodedBitmap != null) {
+                                    val oldBitmap = bitmap
                                     bitmap = decodedBitmap
+                                    oldBitmap?.recycle()
                                     return
                                 }
                             } catch (e: Exception) {
@@ -516,7 +520,9 @@ fun VideoStreamView(
                             val imageBytes = Base64.decode(text, Base64.DEFAULT)
                             val decodedBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                             if (decodedBitmap != null) {
+                                val oldBitmap = bitmap
                                 bitmap = decodedBitmap
+                                oldBitmap?.recycle()
                                 return
                             }
                         } catch (e: Exception) {
@@ -544,7 +550,9 @@ fun VideoStreamView(
                         val imageBytes = bytes.toByteArray()
                         val decodedBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                         if (decodedBitmap != null) {
+                            val oldBitmap = bitmap
                             bitmap = decodedBitmap
+                            oldBitmap?.recycle()
                         } else {
                             // 如果直接解析失败，查看是否为JPEG/PNG格式的二进制数据
                             if (isJPEG(imageBytes) || isPNG(imageBytes)) {

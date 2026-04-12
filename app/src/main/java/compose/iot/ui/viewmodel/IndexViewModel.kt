@@ -36,7 +36,7 @@ import timber.log.Timber
 class IndexViewModel(application: Application) : AndroidViewModel(application) {
     private val context = application.applicationContext
     private val app = application as AiotApp
-    val mqttManager = app.mqttManager
+    private val mqttManager = app.mqttManager
     private val prefsManager: PreferencesManager = app.preferencesManager
 
     private val haManager = HomeAssistantManager(context)
@@ -52,6 +52,8 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
 
     private var lastToastTime = 0L
     private var topicSubscriptionCount = mapOf<String, Int>()
+
+    fun isMqttConnected(): Boolean = mqttManager.isConnected()
 
     // endregion
 
@@ -107,8 +109,9 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
-        Timber.d("ViewModel 销毁，断开 HA 连接")
+        Timber.d("ViewModel 销毁，断开相关连接")
         subscriptionController.dispose()
+        historyManager.dispose()
     }
 
     // endregion
@@ -215,7 +218,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                         emitSnackbar("发送成功")
                     },
                     onError = { error ->
-                        val revert = if (!newState) "on" else "off"
+                        val revert =
+                            when (card.serverType) {
+                                ServerType.EMQX -> if (newState) card.switchOffValue else card.switchOnValue
+                                ServerType.HomeAssistant -> if (newState) "off" else "on"
+                            }
                         _uiState.update { it.copy(cardValues = it.cardValues + (cid to revert)) }
                         emitSnackbar("发送失败: $error")
                     },
@@ -374,7 +381,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
         // 编辑模式：移除旧卡片
         if (previousCard != null) {
             cards = cards.filter { it != previousCard }
-            if (previousTopic != null && previousTopic != card.topic) {
+            if (previousTopic != null) {
                 val count = topicSubscriptionCount[previousTopic] ?: 1
                 if (count <= 1) {
                     subscriptionController.unsubscribeTopic(previousTopic)

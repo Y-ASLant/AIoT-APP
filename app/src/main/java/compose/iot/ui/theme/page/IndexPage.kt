@@ -2,7 +2,6 @@
 
 package compose.iot.ui.theme.page
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -18,11 +17,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
 import compose.iot.R
 import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
@@ -37,32 +40,17 @@ import compose.iot.ui.components.SliderCardContent
 import compose.iot.ui.components.SwitchCardContent
 import compose.iot.ui.theme.function.MqttSubscribeDialog
 import compose.iot.ui.theme.function.SensorHistoryBottomSheet
-import compose.iot.ui.theme.function.standardEnterTransition
-import compose.iot.ui.theme.function.standardExitTransition
 import compose.iot.ui.viewmodel.IndexViewModel
 import compose.iot.ui.viewmodel.UiEvent
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun IndexPage(viewModel: IndexViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // 标题滚动可见性（纯 UI 状态，保留在 Composable）
-    val gridState = rememberLazyStaggeredGridState()
-    var previousFirstVisibleItemIndex by remember { mutableIntStateOf(0) }
-    var isTitleVisible by remember { mutableStateOf(true) }
 
-    LaunchedEffect(remember { derivedStateOf { gridState.firstVisibleItemIndex } }) {
-        if (gridState.firstVisibleItemIndex > previousFirstVisibleItemIndex) {
-            isTitleVisible = false
-        } else if (gridState.firstVisibleItemIndex < previousFirstVisibleItemIndex) {
-            isTitleVisible = true
-        }
-        previousFirstVisibleItemIndex = gridState.firstVisibleItemIndex
-    }
 
     // 收集一次性事件（统一走 Snackbar）
     LaunchedEffect(Unit) {
@@ -74,28 +62,34 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("\u8bbe\u5907\u4e2d\u5fc3") },
+                scrollBehavior = scrollBehavior,
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
+            )
+        },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
+        contentWindowInsets = WindowInsets(0.dp),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if (viewModel.mqttManager.isConnected()) {
-                        viewModel.showAddDialog()
-                    } else {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "请先连接EMQX服务器，然后才可以新增加设备",
-                                duration = SnackbarDuration.Short,
-                            )
-                        }
-                    }
+                    viewModel.showAddDialog()
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
-                Icon(Icons.Default.Add, contentDescription = "添加监控参数")
+                Icon(Icons.Default.Add, contentDescription = "\u6DFB\u52A0\u76D1\u63A7\u53C2\u6570")
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -107,48 +101,94 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
         ) {
-            // ── 顶部标题 + 设备类型筛选 ──
-            DeviceTypeHeader(
-                isTitleVisible = isTitleVisible,
-                selectedDeviceType = uiState.selectedDeviceType,
-                onSelectType = viewModel::selectDeviceType,
+            val pagerState = rememberPagerState(
+                initialPage = if (uiState.selectedDeviceType == DeviceType.SENSOR) 0 else 1,
+                pageCount = { 2 }
             )
 
-            // ── 设备卡片网格 ──
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                state = gridState,
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalItemSpacing = 8.dp,
-            ) {
-                val filteredCards =
-                    uiState.subscriptionCards.filter {
-                        it.deviceType == uiState.selectedDeviceType
-                    }
+            LaunchedEffect(pagerState.currentPage) {
+                val targetType = if (pagerState.currentPage == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
+                if (uiState.selectedDeviceType != targetType) {
+                    viewModel.selectDeviceType(targetType)
+                }
+            }
 
-                if (filteredCards.isEmpty()) {
-                    item(span = StaggeredGridItemSpan.FullLine) { EmptyState() }
-                } else {
-                    items(
-                        items = filteredCards,
-                        key = { card -> card.cardId },
-                        span = { card ->
-                            if (card.deviceType == DeviceType.ACTUATOR) {
-                                StaggeredGridItemSpan.FullLine
-                            } else {
-                                StaggeredGridItemSpan.SingleLane
-                            }
-                        },
-                    ) { card ->
-                        DeviceCardItem(
-                            card = card,
-                            value = uiState.cardValues[card.cardId],
-                            isLoading = card.cardId in uiState.loadingCards,
-                            continuousSliderMode = uiState.continuousSliderMode,
-                            viewModel = viewModel,
-                        )
+            // ── 设备类型筛选 ──
+            SingleChoiceSegmentedButtonRow(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+            ) {
+                SegmentedButton(
+                    selected = uiState.selectedDeviceType == DeviceType.SENSOR,
+                    onClick = {
+                        viewModel.selectDeviceType(DeviceType.SENSOR)
+                        scope.launch { pagerState.animateScrollToPage(0) }
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                ) {
+                    Text(text = "传感器")
+                }
+                SegmentedButton(
+                    selected = uiState.selectedDeviceType == DeviceType.ACTUATOR,
+                    onClick = {
+                        viewModel.selectDeviceType(DeviceType.ACTUATOR)
+                        scope.launch { pagerState.animateScrollToPage(1) }
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                ) {
+                    Text(text = "执行器")
+                }
+            }
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f)
+            ) { page ->
+                val type = if (page == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
+                
+                val filteredCards by remember(page, uiState.subscriptionCards) {
+                    derivedStateOf {
+                        uiState.subscriptionCards.filter {
+                            it.deviceType == type
+                        }
+                    }
+                }
+                
+                val pageGridState = rememberLazyStaggeredGridState()
+
+                // ── 设备卡片网格 ──
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Fixed(2),
+                    state = pageGridState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalItemSpacing = 8.dp,
+                ) {
+                    if (filteredCards.isEmpty()) {
+                        item(span = StaggeredGridItemSpan.FullLine) { EmptyState(type) }
+                    } else {
+                        items(
+                            items = filteredCards,
+                            key = { card -> card.cardId },
+                            span = { card ->
+                                if (card.deviceType == DeviceType.ACTUATOR) {
+                                    StaggeredGridItemSpan.FullLine
+                                } else {
+                                    StaggeredGridItemSpan.SingleLane
+                                }
+                            },
+                        ) { card ->
+                            DeviceCardItem(
+                                card = card,
+                                value = uiState.cardValues[card.cardId],
+                                isLoading = card.cardId in uiState.loadingCards,
+                                continuousSliderMode = uiState.continuousSliderMode,
+                                viewModel = viewModel,
+                            )
+                        }
                     }
                 }
             }
@@ -182,88 +222,35 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
 // region ── 子组件 ──
 
 @Composable
-private fun DeviceTypeHeader(
-    isTitleVisible: Boolean,
-    selectedDeviceType: DeviceType,
-    onSelectType: (DeviceType) -> Unit,
-) {
-    Surface(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.small,
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-        ) {
-            AnimatedVisibility(
-                visible = isTitleVisible,
-                enter = standardEnterTransition(initialOffsetY = -50),
-                exit = standardExitTransition(targetOffsetY = -50),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(text = "设备中心", style = MaterialTheme.typography.headlineMedium)
-                }
-            }
+private fun EmptyState(deviceType: DeviceType) {
+    val iconId = if (deviceType == DeviceType.SENSOR) R.drawable.fluentiot24regular else R.drawable.terminalboxline
+    val typeText = if (deviceType == DeviceType.SENSOR) "传感器" else "执行器"
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth(0.98f)) {
-                    SegmentedButton(
-                        selected = selectedDeviceType == DeviceType.SENSOR,
-                        onClick = { onSelectType(DeviceType.SENSOR) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    ) {
-                        Text(text = "传感器", modifier = Modifier.padding(horizontal = 24.dp))
-                    }
-                    SegmentedButton(
-                        selected = selectedDeviceType == DeviceType.ACTUATOR,
-                        onClick = { onSelectType(DeviceType.ACTUATOR) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    ) {
-                        Text(text = "执行器", modifier = Modifier.padding(horizontal = 24.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyState() {
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(top = 64.dp),
+                .padding(top = 48.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.data),
-                contentDescription = "暂无设备",
-                modifier = Modifier.size(96.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                painter = painterResource(id = iconId),
+                contentDescription = "暂无$typeText",
+                modifier = Modifier.size(72.dp),
+                tint = MaterialTheme.colorScheme.outlineVariant,
             )
             Text(
-                text = "暂无设备\n点击右下角按钮添加设备",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "还没有${typeText}设备",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = "点击右下角 + 按钮添加$typeText",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center,
             )
@@ -316,20 +303,12 @@ private fun DeviceCardItem(
         CardStyle.HIGHLIGHT ->
             ElevatedCard(
                 modifier = cardModifier,
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-                colors =
-                    CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
                 content = cardContent,
             )
         CardStyle.MINIMAL ->
             OutlinedCard(
                 modifier = cardModifier,
-                colors =
-                    CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
                 content = cardContent,
             )
         CardStyle.FILLED ->
@@ -337,7 +316,7 @@ private fun DeviceCardItem(
                 modifier = cardModifier,
                 colors =
                     CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 content = cardContent,
             )
@@ -347,40 +326,59 @@ private fun DeviceCardItem(
 @Composable
 private fun CardHeader(card: SubscriptionCard) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = card.displayName, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = card.displayName,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AssistChip(
+            SuggestionChip(
                 onClick = { },
-                modifier = Modifier.weight(1f),
                 label = {
                     Text(
                         when (card.deviceType) {
                             DeviceType.SENSOR -> "传感器"
                             DeviceType.ACTUATOR -> "执行器"
                         },
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelSmall,
                     )
                 },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fluentiot24regular),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                    )
+                },
+                colors =
+                    SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        iconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                border = null,
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            AssistChip(
+            SuggestionChip(
                 onClick = { },
-                modifier = Modifier.weight(1f),
                 label = {
                     Text(
                         when (card.serverType) {
                             ServerType.EMQX -> "EMQX"
                             ServerType.HomeAssistant -> "HA"
                         },
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelSmall,
                     )
                 },
+                colors =
+                    SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    ),
+                border = null,
             )
         }
     }
