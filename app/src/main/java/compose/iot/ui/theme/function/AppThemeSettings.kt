@@ -131,6 +131,10 @@ fun AppThemePage(navController: NavController) {
                 onChange = {
                     AppState.darkMode.intValue = it
                     prefs.darkMode = it
+                    if (it == AppDarkMode.Auto.value) {
+                        AppState.themeColor.intValue = 0
+                        prefs.themeColor = 0
+                    }
                 },
             )
             Spacer(modifier = Modifier.height(32.dp))
@@ -217,14 +221,16 @@ fun ThemePaletteItem(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val pContext = androidx.compose.ui.platform.LocalContext.current
+            val dynamicColorScheme = if (isDarkMode) dynamicDarkColorScheme(pContext) else dynamicLightColorScheme(pContext)
             ThemeColorBox(
                 selected = themeColor == 0,
                 enabled = enabled,
                 colorName = "动态",
-                primaryColor = MaterialTheme.colorScheme.primary,
-                primaryContainer = MaterialTheme.colorScheme.primaryContainer,
-                tertiaryContainer = MaterialTheme.colorScheme.tertiaryContainer,
-                onPrimary = MaterialTheme.colorScheme.onPrimary,
+                primaryColor = dynamicColorScheme.primary,
+                primaryContainer = dynamicColorScheme.primaryContainer,
+                tertiaryContainer = dynamicColorScheme.tertiaryContainer,
+                onPrimary = dynamicColorScheme.onPrimary,
                 onClick = { onChange(0) },
             )
         }

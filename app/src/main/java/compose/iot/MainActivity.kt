@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
         AppState.cornerShapeLevel.intValue = prefs.cornerShapeLevel
         AppState.appKeepAlive.value = prefs.appKeepAlive
         AppState.themeColor.intValue = prefs.themeColor
+        AppState.darkMode.intValue = prefs.darkMode
         AppState.predictiveBackEnabled.value = prefs.predictiveBackEnabled
 
         if (prefs.appKeepAlive) {
