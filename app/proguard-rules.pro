@@ -78,8 +78,14 @@
 -keepattributes Signature
 -dontwarn com.android.tools.lint.**
 -keep class META-INF.services.** { *; }
+
 -keepclassmembers class * {
     @javax.annotation.* *;
 }
 
-
+# 为了防止 HiveMQ (Mqtt) 在开启代码压缩和混淆时依赖的 Netty 报错 (ExceptionInInitializerError)
+# 需要保留 Netty 和 JCTools 的类成员免遭混淆或精简
+-keepclassmembernames class io.netty.** { *; }
+-keepclassmembernames class org.jctools.** { *; }
+# 保留对于 HiveMQ rxJava内部的调用
+-keep class com.hivemq.client.** { *; }

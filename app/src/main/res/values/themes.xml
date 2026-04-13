@@ -3,9 +3,9 @@
 
     <style name="Theme.AIOT_Compose" parent="android:Theme.Material.Light.NoActionBar">
         <!-- 启用 SplashScreen API -->
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/data</item>
-        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="s">@android:color/white</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">@drawable/data</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">200</item>
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">@drawable/ic_launcher_foreground</item>
         <item name="android:windowSplashScreenBackground">@android:color/white</item>
     </style>
 
