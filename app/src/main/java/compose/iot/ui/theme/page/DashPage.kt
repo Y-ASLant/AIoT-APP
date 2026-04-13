@@ -21,7 +21,7 @@ fun DashPage(navController: NavController) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("连接面板") },
+                title = { Text("连接面板", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
                 scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(

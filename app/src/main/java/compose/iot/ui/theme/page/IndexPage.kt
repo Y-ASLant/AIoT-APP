@@ -67,7 +67,7 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("\u8bbe\u5907\u4e2d\u5fc3") },
+                title = { Text("设备中心", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
                 scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -85,7 +85,7 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
-                Icon(TablerIcons.Plus, contentDescription = "\u6DFB\u52A0\u76D1\u63A7\u53C2\u6570")
+                Icon(TablerIcons.Plus, contentDescription = "添加监控参数")
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
