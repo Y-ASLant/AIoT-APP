@@ -23,6 +23,8 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 - 基于 Material 3 的 Compose 原生界面
 - 完整的深色模式支持与 Material You 动态取色，配合自定义全局应用主题
 - 动态圆角风格自定义与自适应主题图标 (Themed App Icons)
+- 全局底层交互体验优化（消息提示统一采用原生 Toast）
+- 优化了 MQTT 底层连接逻辑，消除主动断开的误报异常
 - 接入 GitHub Actions 的 CI/CD 自动化构建，并实现 Release APK 正式版全自动签名
 - MVVM 架构（ViewModel + StateFlow + Channel）
 
@@ -199,8 +201,6 @@ compose.iot/
 │   └── viewmodel/
 │       ├── IndexUiState.kt         # UI 状态数据类 + 事件定义
 │       └── IndexViewModel.kt       # 设备中心 ViewModel
-└── util/
-    └── AppResult.kt                # 通用App结果封装
 ```
 
 ## 许可证

@@ -13,6 +13,11 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import compose.iot.mqtt.*
 
+private val transparentSegmentedColors
+    @Composable get() = SegmentedButtonDefaults.colors(
+        inactiveContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+    )
+
 @Composable
 fun MqttSubscribeDialog(
     onDismissRequest: () -> Unit,
@@ -60,6 +65,7 @@ fun MqttSubscribeDialog(
                             selected = serverType == type,
                             onClick = { serverType = type },
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = ServerType.entries.size),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text(
                                 when (type) {
@@ -81,6 +87,7 @@ fun MqttSubscribeDialog(
                             selected = deviceType == type,
                             onClick = { deviceType = type },
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = DeviceType.entries.size),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text(
                                 when (type) {
@@ -143,6 +150,7 @@ fun MqttSubscribeDialog(
                                 isPushButtonStyle = false
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 4),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text("开关")
                         }
@@ -154,6 +162,7 @@ fun MqttSubscribeDialog(
                                 isPushButtonStyle = false
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 4),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text("滑块")
                         }
@@ -165,6 +174,7 @@ fun MqttSubscribeDialog(
                                 isPushButtonStyle = true
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 2, count = 4),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text("按钮")
                         }
@@ -176,6 +186,7 @@ fun MqttSubscribeDialog(
                                 isPushButtonStyle = false
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 3, count = 4),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text("输入")
                         }
@@ -255,6 +266,7 @@ fun MqttSubscribeDialog(
                             selected = cardStyle == style,
                             onClick = { cardStyle = style },
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = CardStyle.entries.size),
+                            colors = transparentSegmentedColors,
                         ) {
                             Text(
                                 when (style) {
