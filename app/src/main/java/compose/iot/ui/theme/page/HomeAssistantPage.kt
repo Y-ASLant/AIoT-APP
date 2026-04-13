@@ -1,6 +1,7 @@
 package compose.iot.ui.theme.page
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -49,7 +50,6 @@ fun HomeAssistantPage(navController: NavController) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("homeassistant_config", Context.MODE_PRIVATE)
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     // 添加焦点管理器
     val focusManager = LocalFocusManager.current
@@ -87,7 +87,6 @@ fun HomeAssistantPage(navController: NavController) {
     compose.iot.ui.components.AppScaffold(
         title = "Home Assistant 配置",
         navController = navController,
-        snackbarHostState = snackbarHostState,
         actions = {
             if (showDeviceList) {
                 IconButton(
@@ -180,13 +179,13 @@ fun HomeAssistantPage(navController: NavController) {
                     Button(
                         onClick = {
                             if (serverUrl.isBlank() || accessToken.isBlank() || pollingInterval.isBlank()) {
-                                scope.launch { snackbarHostState.showSnackbar("请填写所有必填项", duration = SnackbarDuration.Short) }
+                                Toast.makeText(context, "请填写所有必填项", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
                             val intervalValue = pollingInterval.toIntOrNull()
                             if (intervalValue == null || intervalValue < 1) {
-                                scope.launch { snackbarHostState.showSnackbar("轮询间隔必须是大于0的整数", duration = SnackbarDuration.Short) }
+                                Toast.makeText(context, "轮询间隔必须是大于0的整数", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
@@ -209,9 +208,9 @@ fun HomeAssistantPage(navController: NavController) {
                                         showDeviceList = true
                                     }
 
-                                    scope.launch { snackbarHostState.showSnackbar("连接成功", duration = SnackbarDuration.Short) }
+                                    Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show()
                                 } else {
-                                    scope.launch { snackbarHostState.showSnackbar("连接失败，请检查配置", duration = SnackbarDuration.Short) }
+                                    Toast.makeText(context, "连接失败，请检查配置", Toast.LENGTH_SHORT).show()
                                 }
                                 isLoading = false
                             }
@@ -400,7 +399,7 @@ fun HomeAssistantPage(navController: NavController) {
 
                                         // 检查是否已经添加过
                                         if (existingCards.any { it.topic == card.topic }) {
-                                            snackbarHostState.showSnackbar("该设备已添加", duration = SnackbarDuration.Short)
+                                            Toast.makeText(context, "该设备已添加", Toast.LENGTH_SHORT).show()
                                             return@launch
                                         }
 
@@ -447,7 +446,7 @@ fun HomeAssistantPage(navController: NavController) {
                                             }
                                         }
 
-                                        snackbarHostState.showSnackbar("已添加设备：${device.friendlyName}", duration = SnackbarDuration.Short)
+                                        Toast.makeText(context, "已添加设备：${device.friendlyName}", Toast.LENGTH_SHORT).show()
                                     }
                                     // 不再自动返回首页
                                     // navController.navigateUp()

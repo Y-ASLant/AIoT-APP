@@ -31,7 +31,9 @@ class MqttManager() {
     private val subscriptionCallbacks = ConcurrentHashMap<String, (String) -> Unit>()
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val clientMutex = Mutex()
-    @Volatile private var intentionalDisconnect = false
+
+    @Volatile
+    private var intentionalDisconnect = false
 
     private var username: String? = null
     private var password: String? = null

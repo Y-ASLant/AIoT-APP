@@ -1,5 +1,6 @@
 package compose.iot.ui.theme.page
 
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -19,7 +20,6 @@ import androidx.navigation.NavController
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import compose.iot.mqtt.MqttManager
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,8 +29,6 @@ fun LoginPage(
 ) {
     val context = LocalContext.current
     var isConnected by remember { mutableStateOf(mqttManager.isConnected()) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     val preferencesManager = remember { (context.applicationContext as compose.iot.AiotApp).preferencesManager }
     var serverIp by remember { mutableStateOf(preferencesManager.mqttServerIp) }
@@ -58,11 +56,11 @@ fun LoginPage(
         mqttManager.connect(
             onConnectComplete = {
                 isConnected = true
-                scope.launch { snackbarHostState.showSnackbar("服务器连接成功") }
+                Toast.makeText(context, "服务器连接成功", Toast.LENGTH_SHORT).show()
             },
             onError = { error ->
                 isConnected = false
-                scope.launch { snackbarHostState.showSnackbar(error) }
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
             },
         )
     }
@@ -70,7 +68,6 @@ fun LoginPage(
     compose.iot.ui.components.AppScaffold(
         title = "MQTT 连接设置",
         navController = navController,
-        snackbarHostState = snackbarHostState,
     ) { _ ->
         Column(
             modifier =
@@ -271,9 +268,7 @@ fun LoginPage(
                         } else {
                             mqttManager.disconnect()
                             isConnected = false
-                            scope.launch {
-                                snackbarHostState.showSnackbar("MQTT服务器已断开", duration = SnackbarDuration.Short)
-                            }
+                            Toast.makeText(context, "MQTT服务器已断开", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier =

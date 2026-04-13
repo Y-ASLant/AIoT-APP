@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -75,7 +76,6 @@ fun BluetoothPage(navController: NavController) {
     var isScanning by remember { mutableStateOf(false) }
     var hasPermission by remember { mutableStateOf(hasBluetoothPermissions(context)) }
     val discoveredDevices = remember { mutableStateListOf<BluetoothDevice>() }
-    val snackbarHostState = remember { SnackbarHostState() }
 
     // 权限申请
     val permissionLauncher =
@@ -84,12 +84,7 @@ fun BluetoothPage(navController: NavController) {
         ) { permissions ->
             hasPermission = permissions.values.all { it }
             if (!hasPermission) {
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        message = "需要蓝牙权限才能扫描设备",
-                        duration = SnackbarDuration.Short,
-                    )
-                }
+                Toast.makeText(context, "需要蓝牙权限才能扫描设备", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -153,7 +148,6 @@ fun BluetoothPage(navController: NavController) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         title = "蓝牙设备",
         navController = navController,
-        snackbarHostState = snackbarHostState,
         scrollBehavior = scrollBehavior,
     ) { _ ->
         Column(
@@ -236,12 +230,7 @@ fun BluetoothPage(navController: NavController) {
                                 return@FilledTonalButton
                             }
                             if (bluetoothAdapter?.isEnabled != true) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "请先在系统设置中开启蓝牙",
-                                        duration = SnackbarDuration.Short,
-                                    )
-                                }
+                                Toast.makeText(context, "请先在系统设置中开启蓝牙", Toast.LENGTH_SHORT).show()
                                 return@FilledTonalButton
                             }
                             if (isScanning) {
@@ -259,9 +248,7 @@ fun BluetoothPage(navController: NavController) {
                                     }
 
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && !isLocationEnabled) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("请开启系统定位服务(GPS)以发现蓝牙设备")
-                                    }
+                                    Toast.makeText(context, "请开启系统定位服务(GPS)以发现蓝牙设备", Toast.LENGTH_SHORT).show()
                                     return@FilledTonalButton
                                 }
 

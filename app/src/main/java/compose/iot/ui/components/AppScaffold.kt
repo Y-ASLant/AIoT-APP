@@ -11,8 +11,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -35,7 +33,6 @@ fun AppScaffold(
     title: String,
     navController: NavController?,
     modifier: Modifier = Modifier,
-    snackbarHostState: SnackbarHostState? = null,
     showBackButton: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {},
@@ -83,11 +80,6 @@ fun AppScaffold(
                         titleContentColor = MaterialTheme.colorScheme.onSurface,
                     ),
             )
-        },
-        snackbarHost = {
-            if (snackbarHostState != null) {
-                SnackbarHost(hostState = snackbarHostState)
-            }
         },
     ) { paddingValues ->
         Box(

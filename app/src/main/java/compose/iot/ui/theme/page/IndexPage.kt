@@ -2,6 +2,7 @@
 
 package compose.iot.ui.theme.page
 
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -48,14 +49,14 @@ import kotlinx.coroutines.launch
 fun IndexPage(viewModel: IndexViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
-    // 收集一次性事件（统一走 Snackbar）
+    // 收集一次性事件
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is UiEvent.ShowSnackbar ->
-                    snackbarHostState.showSnackbar(event.message, duration = SnackbarDuration.Short)
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -74,9 +75,6 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                         scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
             )
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
         },
         contentWindowInsets = WindowInsets(0.dp),
         floatingActionButton = {

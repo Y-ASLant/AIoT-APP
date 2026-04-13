@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,7 +43,6 @@ fun AboutPage(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var updateMessage by remember { mutableStateOf("") }
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val packageInfo =
         remember {
@@ -81,7 +81,6 @@ fun AboutPage(navController: NavController) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         title = "关于",
         navController = navController,
-        snackbarHostState = snackbarHostState,
         showBackButton = false,
         scrollBehavior = scrollBehavior,
     ) { _ ->
@@ -451,7 +450,7 @@ fun AboutPage(navController: NavController) {
     // 无更新或出错提示
     if (updateMessage.isNotEmpty()) {
         LaunchedEffect(updateMessage) {
-            snackbarHostState.showSnackbar(updateMessage, duration = SnackbarDuration.Short)
+            Toast.makeText(context, updateMessage, Toast.LENGTH_SHORT).show()
             updateMessage = ""
         }
     }
