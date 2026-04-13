@@ -24,7 +24,7 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 - 完整的深色模式支持与 Material You 动态取色，配合自定义全局应用主题
 - 动态圆角风格自定义与自适应主题图标 (Themed App Icons)
 - 全局底层交互体验优化（消息提示统一采用原生 Toast）
-- 优化了 MQTT 底层连接逻辑，消除主动断开的误报异常
+- 基于 HiveMQ MQTT 客户端重构了连接逻辑，彻底消除主动断开的误报异常并带来更强性能
 - 接入 GitHub Actions 的 CI/CD 自动化构建，并实现 Release APK 正式版全自动签名
 - MVVM 架构（ViewModel + StateFlow + Channel）
 
@@ -33,9 +33,9 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 - **语言**: Kotlin 2.1.20
 - **UI 框架**: Jetpack Compose (Material 3 / BOM 2025.02.00)
 - **导航**: Android Navigation Compose
-- **MQTT**: Eclipse Paho MQTT v3 / Android Service
+- **MQTT**: HiveMQ MQTT Client
 - **网络**: OkHttp 4.12.0
-- **数据持久化**: Room 2.6.1 + SharedPreferences
+- **数据持久化**: Room 2.8.4 + SharedPreferences
 - **架构**: ViewModel + StateFlow + Channel（MVVM）
 - **日志**: Timber
 - **构建**: KSP + ktlint
@@ -43,7 +43,7 @@ AIoT-APP 是一个使用 Kotlin 和 Jetpack Compose 开发的原生 Android 智�
 ## 运行要求
 
 - Android 8.0 及以上（`minSdk 26`）
-- `targetSdk 35` / `compileSdk 35`
+- `targetSdk 36` / `compileSdk 36`
 - Java 21
 - Android Studio 新版稳定版
 
