@@ -31,6 +31,7 @@ class MqttManager() {
     private val subscriptionCallbacks = ConcurrentHashMap<String, (String) -> Unit>()
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val clientMutex = Mutex()
+    @Volatile private var intentionalDisconnect = false
 
     private var username: String? = null
     private var password: String? = null
@@ -85,11 +86,15 @@ class MqttManager() {
                     val port = if (uri.port != -1) uri.port else 1883
 
                     val disconnectedListener = { context: MqttClientDisconnectedContext ->
-                        val cause = context.cause
-                        Timber.e(cause, "Connection lost")
-                        ioScope.launch {
-                            withContext(Dispatchers.Main) {
-                                onError("连接丢失: ${cause.message ?: "未知错误"}")
+                        if (intentionalDisconnect) {
+                            intentionalDisconnect = false
+                        } else {
+                            val cause = context.cause
+                            Timber.e(cause, "Connection lost")
+                            ioScope.launch {
+                                withContext(Dispatchers.Main) {
+                                    onError("连接丢失: ${cause.message ?: "未知错误"}")
+                                }
                             }
                         }
                         Unit
@@ -209,6 +214,7 @@ class MqttManager() {
         ioScope.launch {
             try {
                 clientMutex.withLock {
+                    intentionalDisconnect = true
                     mqtt5Client?.takeIf { it.state.isConnected }?.disconnect()
                     mqtt5Client = null
 
@@ -216,6 +222,7 @@ class MqttManager() {
                     mqtt3Client = null
                 }
             } catch (e: Exception) {
+                intentionalDisconnect = false
                 Timber.e(e, "Disconnect error")
             }
         }
