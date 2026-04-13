@@ -1,6 +1,6 @@
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ksp)
@@ -27,12 +27,12 @@ android {
         checkReleaseBuilds = false
         abortOnError = false
     }
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "compose.iot"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = (project.findProperty("VERSION_CODE") as? String)?.toInt() ?: 20260412
         versionName = (project.findProperty("VERSION_NAME") as? String) ?: "1.5.0"
 
@@ -68,7 +68,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // 启用R8完全模式优化
             isDebuggable = false
             splits {
                 abi {
@@ -90,18 +89,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions {
-        jvmTarget = "21"
-    }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion =
-            libs.versions.compose.compiler.get()
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

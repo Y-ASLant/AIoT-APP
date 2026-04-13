@@ -31,7 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
                         "aiot_app_database",
                     )
                         // Use fallbackToDestructiveMigration if you want to wipe data on schema change during dev
-                        .fallbackToDestructiveMigration()
+                        .fallbackToDestructiveMigration(dropAllTables = true)
                         .build()
                 instance = dbInstance
                 dbInstance
