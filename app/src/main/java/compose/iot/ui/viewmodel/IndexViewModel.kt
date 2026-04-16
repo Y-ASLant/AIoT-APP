@@ -11,11 +11,10 @@ import compose.iot.mqtt.HomeAssistantManager
 import compose.iot.mqtt.SensorHistoryManager
 import compose.iot.mqtt.ServerType
 import compose.iot.mqtt.SubscriptionCard
-import compose.iot.mqtt.cardId
-import compose.iot.mqtt.extractEntityId
 import compose.iot.ui.theme.page.DeviceSubscriptionController
 import compose.iot.ui.theme.page.SubscriptionCardStorage
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -86,24 +85,8 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
             haManager.setPollingInterval(prefsManager.haPollingInterval)
         }
 
-        // 加载卡片及初始状态
         viewModelScope.launch {
-            val cards = app.appDatabase.subscriptionCardDao().getAllCards()
-            val actuatorValues = SubscriptionCardStorage.loadActuatorCardValues(context, cards)
-            topicSubscriptionCount = cards.groupingBy { it.topic }.eachCount()
-
-            Timber.d("开始初始化执行器状态")
-            _uiState.update {
-                it.copy(
-                    subscriptionCards = cards,
-                    cardValues = actuatorValues,
-                    selectedDeviceType = prefsManager.selectedDeviceType,
-                    continuousSliderMode = prefsManager.sliderContinuousUpdate,
-                )
-            }
-
-            // 订阅所有主题
-            subscriptionController.subscribeAll()
+            app.appDatabase.subscriptionCardDao().getAllCardsStream().collectLatest(::syncCards)
         }
     }
 
@@ -115,6 +98,33 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // endregion
+
+    private fun syncCards(cards: List<SubscriptionCard>) {
+        val newTopicCounts = cards.groupingBy { it.topic }.eachCount()
+
+        topicSubscriptionCount.keys
+            .filter { it !in newTopicCounts }
+            .forEach(subscriptionController::unsubscribeTopic)
+
+        newTopicCounts.keys
+            .filter { it !in topicSubscriptionCount }
+            .forEach(subscriptionController::subscribeTopic)
+
+        topicSubscriptionCount = newTopicCounts
+
+        val currentCardIds = cards.mapTo(mutableSetOf()) { buildCardId(it) }
+        val actuatorValues = SubscriptionCardStorage.loadActuatorCardValues(context, cards)
+
+        Timber.d("同步卡片列表，数量=%d", cards.size)
+        _uiState.update { state ->
+            state.copy(
+                subscriptionCards = cards,
+                cardValues = state.cardValues.filterKeys { it in currentCardIds } + actuatorValues,
+                selectedDeviceType = prefsManager.selectedDeviceType,
+                continuousSliderMode = prefsManager.sliderContinuousUpdate,
+            )
+        }
+    }
 
     // region ── 设备类型切换 ──
 
@@ -145,7 +155,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
 
     fun showHistory(card: SubscriptionCard) {
         viewModelScope.launch {
-            val data = historyManager.getHistoryData(card.cardId)
+            val data = historyManager.getHistoryData(buildCardId(card))
             _uiState.update {
                 it.copy(
                     selectedSensorCard = card,
@@ -162,7 +172,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearHistory() {
         val card = _uiState.value.selectedSensorCard ?: return
-        historyManager.clearHistory(card.cardId)
+        historyManager.clearHistory(buildCardId(card))
         _uiState.update { it.copy(sensorHistoryData = emptyList()) }
         emitSnackbar("历史记录已清除")
     }
@@ -175,7 +185,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
         card: SubscriptionCard,
         newState: Boolean,
     ) {
-        val cid = card.cardId
+        val cid = buildCardId(card)
         when (card.serverType) {
             ServerType.EMQX -> {
                 _uiState.update { it.copy(loadingCards = it.loadingCards + cid) }
@@ -204,7 +214,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                 // 乐观更新
                 val storeValue = if (newState) "on" else "off"
                 _uiState.update { it.copy(cardValues = it.cardValues + (cid to storeValue)) }
-                val entityId = card.extractEntityId()
+                val entityId = extractEntityId(card)
                 haManager.callService(
                     domain = getSwitchDomain(entityId),
                     service = getSwitchService(entityId, newState),
@@ -239,7 +249,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
         card: SubscriptionCard,
         value: Float,
     ) {
-        val cid = card.cardId
+        val cid = buildCardId(card)
         when (card.serverType) {
             ServerType.EMQX -> {
                 val json = JSONObject().apply { put(card.jsonParam, value) }
@@ -254,7 +264,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             ServerType.HomeAssistant -> {
-                val entityId = card.extractEntityId()
+                val entityId = extractEntityId(card)
                 haManager.callService(
                     domain = getSliderDomain(entityId),
                     service = getSliderService(entityId),
@@ -301,7 +311,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             ServerType.HomeAssistant -> {
-                val entityId = card.extractEntityId()
+                val entityId = extractEntityId(card)
                 haManager.callService(
                     domain = getButtonDomain(entityId),
                     service = "press",
@@ -347,7 +357,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             ServerType.HomeAssistant -> {
-                val entityId = card.extractEntityId()
+                val entityId = extractEntityId(card)
                 haManager.callService(
                     domain = getInputDomain(entityId),
                     service = "set_value",
@@ -374,23 +384,12 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
         card: SubscriptionCard,
         previousCard: SubscriptionCard?,
     ) {
-        val state = _uiState.value
-        var cards = state.subscriptionCards
-        val previousTopic = previousCard?.topic
-
-        // 编辑模式：移除旧卡片
-        if (previousCard != null) {
-            cards = cards.filter { it != previousCard }
-            if (previousTopic != null) {
-                val count = topicSubscriptionCount[previousTopic] ?: 1
-                if (count <= 1) {
-                    subscriptionController.unsubscribeTopic(previousTopic)
-                    topicSubscriptionCount = topicSubscriptionCount - previousTopic
-                } else {
-                    topicSubscriptionCount = topicSubscriptionCount + (previousTopic to (count - 1))
-                }
+        val cards =
+            if (previousCard != null) {
+                _uiState.value.subscriptionCards.filter { it != previousCard }
+            } else {
+                _uiState.value.subscriptionCards
             }
-        }
 
         // 重复检查（仅新增传感器时）
         if (previousCard == null &&
@@ -401,10 +400,6 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // 添加新卡片
-        val newCards = cards + card
-
-        // 保存到数据库
         viewModelScope.launch {
             if (previousCard != null) {
                 app.appDatabase.subscriptionCardDao().deleteCardById(previousCard.topic, previousCard.jsonParam)
@@ -412,16 +407,8 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
             app.appDatabase.subscriptionCardDao().insertCards(listOf(card))
         }
 
-        // 订阅新主题
-        if (!topicSubscriptionCount.containsKey(card.topic)) {
-            subscriptionController.subscribeTopic(card.topic)
-        }
-        val currentCount = topicSubscriptionCount[card.topic] ?: 0
-        topicSubscriptionCount = topicSubscriptionCount + (card.topic to (currentCount + 1))
-
         _uiState.update {
             it.copy(
-                subscriptionCards = newCards,
                 showSubscribeDialog = false,
                 editingCard = null,
             )
@@ -430,25 +417,12 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteCard(card: SubscriptionCard) {
-        val count = topicSubscriptionCount[card.topic] ?: 1
-        if (count <= 1) {
-            subscriptionController.unsubscribeTopic(card.topic)
-            topicSubscriptionCount = topicSubscriptionCount - card.topic
-        } else {
-            topicSubscriptionCount = topicSubscriptionCount + (card.topic to (count - 1))
-        }
-
-        val cid = card.cardId
-        val newCards = _uiState.value.subscriptionCards.filter { it != card }
-
         viewModelScope.launch {
             app.appDatabase.subscriptionCardDao().deleteCard(card)
         }
 
         _uiState.update {
             it.copy(
-                subscriptionCards = newCards,
-                cardValues = it.cardValues - cid,
                 showSubscribeDialog = false,
                 editingCard = null,
             )
@@ -535,6 +509,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
             lastToastTime = now
         }
     }
+
+    private fun buildCardId(card: SubscriptionCard): String = "${card.topic}:${card.jsonParam}"
+
+    private fun extractEntityId(card: SubscriptionCard): String =
+        card.topic.removePrefix("homeassistant/").removeSuffix("/state")
 
     // endregion
 }

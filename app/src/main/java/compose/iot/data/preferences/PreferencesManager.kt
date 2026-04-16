@@ -63,9 +63,17 @@ class PreferencesManager(private val context: Context) {
 
     // region ── Home Assistant 配置 ──
 
-    val haServerUrl: String get() = haPrefs.getString("server_url", "") ?: ""
-    val haAccessToken: String get() = haPrefs.getString("access_token", "") ?: ""
-    val haPollingInterval: Int get() = haPrefs.getInt("polling_interval", 3)
+    var haServerUrl: String
+        get() = haPrefs.getString("server_url", "") ?: ""
+        set(value) = haPrefs.edit { putString("server_url", value) }
+
+    var haAccessToken: String
+        get() = haPrefs.getString("access_token", "") ?: ""
+        set(value) = haPrefs.edit { putString("access_token", value) }
+
+    var haPollingInterval: Int
+        get() = haPrefs.getInt("polling_interval", 3)
+        set(value) = haPrefs.edit { putInt("polling_interval", value) }
 
     // endregion
 
