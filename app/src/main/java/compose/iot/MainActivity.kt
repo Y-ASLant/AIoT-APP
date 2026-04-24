@@ -9,7 +9,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -34,7 +33,6 @@ class MainActivity : ComponentActivity() {
         val mqttManager = app.mqttManager
         val prefs = app.preferencesManager
 
-        // 初始化界面状态
         AppState.cornerShapeLevel.intValue = prefs.cornerShapeLevel
         AppState.appKeepAlive.value = prefs.appKeepAlive
         AppState.themeColor.intValue = prefs.themeColor
@@ -45,7 +43,6 @@ class MainActivity : ComponentActivity() {
             MqttForegroundService.start(this)
         }
 
-        // 自动连接 MQTT（配置已在 AiotApp.onCreate 中设置）
         if (prefs.mqttAutoConnect) {
             mqttManager.connect(
                 onConnectComplete = {
@@ -68,8 +65,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val scope = rememberCoroutineScope()
                     val navController = rememberNavController()
-
-                    val currentBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = null)
 
                     if (!predictiveBackEnabled) {
                         androidx.activity.compose.BackHandler(enabled = navController.previousBackStackEntry != null) {

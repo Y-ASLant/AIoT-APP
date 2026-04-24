@@ -19,13 +19,13 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class MqttManager() {
+class MqttManager {
     private var mqtt3Client: Mqtt3AsyncClient? = null
     private var mqtt5Client: Mqtt5AsyncClient? = null
 
-    private var serverUri = "tcp://broker.emqx.io:1883" // 默认服务器地址
+    private var serverUri = "tcp://broker.emqx.io:1883"
     private var clientId = "ComposeApplication_" + UUID.randomUUID().toString().substring(0, 8)
-    private var mqttVersion = 3 // 默认 MQTT 版本为 3.1.1
+    private var mqttVersion = 3
 
     private val topic = "aslant"
     private val subscriptionCallbacks = ConcurrentHashMap<String, (String) -> Unit>()
@@ -72,11 +72,9 @@ class MqttManager() {
                         return@withLock
                     }
 
-                    // 如果有旧的不同版本的客户端并且是连接状态先断开，以防万一
                     mqtt3Client?.takeIf { it.state.isConnected }?.disconnect()
                     mqtt5Client?.takeIf { it.state.isConnected }?.disconnect()
 
-                    // 解析 URI
                     val uriString = if (!serverUri.contains("://")) "tcp://$serverUri" else serverUri
                     val uri =
                         try {
@@ -103,7 +101,7 @@ class MqttManager() {
                     }
 
                     if (mqttVersion == 5) {
-                        mqtt5Client =
+                        val client =
                             MqttClient.builder()
                                 .useMqttVersion5()
                                 .identifier(clientId)
@@ -111,14 +109,15 @@ class MqttManager() {
                                 .serverPort(port)
                                 .addDisconnectedListener(disconnectedListener)
                                 .buildAsync()
+                        mqtt5Client = client
 
-                        mqtt5Client!!.connectWith()
+                        client.connectWith()
                             .cleanStart(true)
-                            .keepAlive(60)
-                            .let { builder ->
-                                if (!username.isNullOrBlank()) {
+                            .keepAlive(60).let { builder ->
+                                val currentUsername = username
+                                if (!currentUsername.isNullOrBlank()) {
                                     builder.simpleAuth()
-                                        .username(username!!)
+                                        .username(currentUsername)
                                         .password(password?.toByteArray(StandardCharsets.UTF_8) ?: ByteArray(0))
                                         .applySimpleAuth()
                                 } else {
@@ -126,11 +125,9 @@ class MqttManager() {
                                 }
                             }
                             .send()
-                            .whenComplete { _, throwable ->
-                                handleConnectResponse(throwable, onConnectComplete, onError)
-                            }
+                            .whenComplete { _, throwable -> handleConnectResponse(throwable, onConnectComplete, onError) }
                     } else {
-                        mqtt3Client =
+                        val client =
                             MqttClient.builder()
                                 .useMqttVersion3()
                                 .identifier(clientId)
@@ -138,14 +135,15 @@ class MqttManager() {
                                 .serverPort(port)
                                 .addDisconnectedListener(disconnectedListener)
                                 .buildAsync()
+                        mqtt3Client = client
 
-                        mqtt3Client!!.connectWith()
+                        client.connectWith()
                             .cleanSession(true)
-                            .keepAlive(60)
-                            .let { builder ->
-                                if (!username.isNullOrBlank()) {
+                            .keepAlive(60).let { builder ->
+                                val currentUsername = username
+                                if (!currentUsername.isNullOrBlank()) {
                                     builder.simpleAuth()
-                                        .username(username!!)
+                                        .username(currentUsername)
                                         .password(password?.toByteArray(StandardCharsets.UTF_8) ?: ByteArray(0))
                                         .applySimpleAuth()
                                 } else {
@@ -153,9 +151,7 @@ class MqttManager() {
                                 }
                             }
                             .send()
-                            .whenComplete { _, throwable ->
-                                handleConnectResponse(throwable, onConnectComplete, onError)
-                            }
+                            .whenComplete { _, throwable -> handleConnectResponse(throwable, onConnectComplete, onError) }
                     }
                 }
             } catch (e: Exception) {
@@ -179,7 +175,6 @@ class MqttManager() {
             ioScope.launch(Dispatchers.Main) {
                 onConnectComplete()
             }
-            // 在全局 topic 上进行一次底层订阅
             if (mqttVersion == 5) {
                 mqtt5Client?.subscribeWith()
                     ?.topicFilter(topic)
@@ -204,11 +199,13 @@ class MqttManager() {
     ) {
         if (payload == null) return
         val messageStr = String(payload, StandardCharsets.UTF_8)
-        val c = subscriptionCallbacks[publishTopic]
-        if (c != null) {
-            ioScope.launch { c(messageStr) }
-        } else if (subscriptionCallbacks[topic] != null) {
-            ioScope.launch { subscriptionCallbacks[topic]!!(messageStr) }
+        subscriptionCallbacks[publishTopic]?.let { callback ->
+            ioScope.launch { callback(messageStr) }
+            return
+        }
+
+        subscriptionCallbacks[topic]?.let { callback ->
+            ioScope.launch { callback(messageStr) }
         }
     }
 

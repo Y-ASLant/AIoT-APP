@@ -51,7 +51,6 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    // 收集一次性事件
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -110,7 +109,6 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                 }
             }
 
-            // ── 设备类型筛选 ──
             SingleChoiceSegmentedButtonRow(
                 modifier =
                     Modifier
@@ -155,7 +153,6 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
 
                 val pageGridState = rememberLazyStaggeredGridState()
 
-                // ── 设备卡片网格 ──
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),
                     state = pageGridState,
@@ -192,18 +189,17 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
         }
     }
 
-    // ── 历史数据底部弹出 ──
-    if (uiState.showHistoryBottomSheet && uiState.selectedSensorCard != null) {
+    val selectedSensorCard = uiState.selectedSensorCard
+    if (uiState.showHistoryBottomSheet && selectedSensorCard != null) {
         SensorHistoryBottomSheet(
-            sensorName = uiState.selectedSensorCard!!.displayName,
-            unitSuffix = uiState.selectedSensorCard!!.unitSuffix,
+            sensorName = selectedSensorCard.displayName,
+            unitSuffix = selectedSensorCard.unitSuffix,
             historyData = uiState.sensorHistoryData,
             onDismiss = viewModel::dismissHistory,
             onClearHistory = viewModel::clearHistory,
         )
     }
 
-    // ── 订阅对话框 ──
     if (uiState.showSubscribeDialog) {
         MqttSubscribeDialog(
             onDismissRequest = viewModel::dismissDialog,
