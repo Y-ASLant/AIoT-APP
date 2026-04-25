@@ -17,7 +17,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import compose.iot.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -73,7 +75,7 @@ fun PushButtonCardContent(
                     strokeWidth = 2.dp,
                 )
             } else {
-                Text("执行")
+                Text(stringResource(R.string.execute))
             }
         }
     }

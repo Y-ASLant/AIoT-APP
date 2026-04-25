@@ -6,38 +6,44 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import compose.iot.data.preferences.PreferencesManager
 import compose.iot.mqtt.MqttForegroundService
+import compose.iot.mqtt.MqttManager
+import compose.iot.navigation.AppDestination
+import compose.iot.ui.app.AppSettingsViewModel
+import compose.iot.ui.app.LocalAppSettingsViewModel
 import compose.iot.ui.theme.function.AppThemePage
 import compose.iot.ui.theme.function.MainScaffold
-import compose.iot.ui.theme.page.*
+import compose.iot.ui.theme.page.BluetoothPage
+import compose.iot.ui.theme.page.ChangelogPage
+import compose.iot.ui.theme.page.HomeAssistantPage
+import compose.iot.ui.theme.page.LoginPage
 import compose.iot.ui.theme.page.video.VideoStreamPage
 import compose.iot.ui.theme.ui.theme.AIOT_ComposeTheme
+import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var mqttManager: MqttManager
+
+    @Inject
+    lateinit var prefs: PreferencesManager
+
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-
-        val app = application as AiotApp
-        val mqttManager = app.mqttManager
-        val prefs = app.preferencesManager
-
-        AppState.cornerShapeLevel.intValue = prefs.cornerShapeLevel
-        AppState.appKeepAlive.value = prefs.appKeepAlive
-        AppState.themeColor.intValue = prefs.themeColor
-        AppState.darkMode.intValue = prefs.darkMode
-        AppState.predictiveBackEnabled.value = prefs.predictiveBackEnabled
 
         if (prefs.appKeepAlive) {
             MqttForegroundService.start(this)
@@ -46,52 +52,51 @@ class MainActivity : ComponentActivity() {
         if (prefs.mqttAutoConnect) {
             mqttManager.connect(
                 onConnectComplete = {
-                    timber.log.Timber.i("MQTT 自动连接成功")
+                    Timber.i("MQTT 自动连接成功")
                 },
                 onError = { error ->
-                    timber.log.Timber.w("MQTT 自动连接失败: %s", error)
+                    Timber.w("MQTT 自动连接失败: %s", error)
                 },
             )
         }
 
         enableEdgeToEdge()
         setContent {
-            val predictiveBackEnabled by AppState.predictiveBackEnabled
+            val appSettingsViewModel: AppSettingsViewModel = hiltViewModel()
+            val appSettings by appSettingsViewModel.uiState.collectAsStateWithLifecycle()
+            val navController = rememberNavController()
 
-            AIOT_ComposeTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    val scope = rememberCoroutineScope()
-                    val navController = rememberNavController()
-
-                    if (!predictiveBackEnabled) {
+            CompositionLocalProvider(LocalAppSettingsViewModel provides appSettingsViewModel) {
+                AIOT_ComposeTheme(appSettings = appSettings) {
+                    if (!appSettings.predictiveBackEnabled) {
                         androidx.activity.compose.BackHandler(enabled = navController.previousBackStackEntry != null) {
                             navController.navigateUp()
                         }
                     }
 
-                    NavHost(navController = navController, startDestination = "index") {
-                        composable("index") {
-                            MainScaffold(scope, navController)
+                    NavHost(
+                        navController = navController,
+                        startDestination = AppDestination.Root,
+                    ) {
+                        composable<AppDestination.Root> {
+                            MainScaffold(navController = navController)
                         }
-                        composable("login") {
-                            LoginPage(navController, mqttManager)
+                        composable<AppDestination.Login> {
+                            LoginPage(navController, mqttManager, prefs)
                         }
-                        composable("homeassistant") {
+                        composable<AppDestination.HomeAssistant> {
                             HomeAssistantPage(navController)
                         }
-                        composable("changelog") {
+                        composable<AppDestination.Changelog> {
                             ChangelogPage()
                         }
-                        composable("video_stream") {
+                        composable<AppDestination.VideoStream> {
                             VideoStreamPage(navController)
                         }
-                        composable("bluetooth") {
+                        composable<AppDestination.Bluetooth> {
                             BluetoothPage(navController)
                         }
-                        composable("app_theme") {
+                        composable<AppDestination.AppTheme> {
                             AppThemePage(navController)
                         }
                     }
@@ -102,9 +107,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        val prefs = (application as AiotApp).preferencesManager
         if (!prefs.appKeepAlive) {
-            (application as AiotApp).mqttManager.release()
+            mqttManager.release()
         }
     }
 }

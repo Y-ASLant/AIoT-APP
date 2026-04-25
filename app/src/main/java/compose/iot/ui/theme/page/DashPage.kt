@@ -7,10 +7,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import compose.iot.R
+import compose.iot.navigation.AppDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,7 +24,7 @@ fun DashPage(navController: NavController) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("连接面板", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
+                title = { Text(stringResource(R.string.connection_dashboard), fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
                 scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -51,13 +54,13 @@ fun DashPage(navController: NavController) {
                     iconContent = {
                         Icon(
                             imageVector = TablerIcons.Server,
-                            contentDescription = "MQTT 服务",
+                            contentDescription = stringResource(R.string.mqtt_service),
                             modifier = Modifier.size(22.dp),
                         )
                     },
-                    title = "MQTT 服务",
-                    description = "配置 EMQX Broker 连接参数",
-                    onClick = { navController.navigate("login") },
+                    title = stringResource(R.string.mqtt_service),
+                    description = stringResource(R.string.mqtt_service_description),
+                    onClick = { navController.navigate(AppDestination.Login) },
                 )
             }
 
@@ -67,13 +70,13 @@ fun DashPage(navController: NavController) {
                     iconContent = {
                         Icon(
                             imageVector = TablerIcons.Home2,
-                            contentDescription = "Home Assistant",
+                            contentDescription = stringResource(R.string.home_assistant),
                             modifier = Modifier.size(22.dp),
                         )
                     },
-                    title = "Home Assistant",
-                    description = "接入 HA 智能家居平台",
-                    onClick = { navController.navigate("homeassistant") },
+                    title = stringResource(R.string.home_assistant),
+                    description = stringResource(R.string.home_assistant_description),
+                    onClick = { navController.navigate(AppDestination.HomeAssistant) },
                 )
             }
 
@@ -83,13 +86,13 @@ fun DashPage(navController: NavController) {
                     iconContent = {
                         Icon(
                             imageVector = TablerIcons.Video,
-                            contentDescription = "视频流服务",
+                            contentDescription = stringResource(R.string.video_stream_service),
                             modifier = Modifier.size(22.dp),
                         )
                     },
-                    title = "视频流服务",
-                    description = "WebSocket 实时画面监控",
-                    onClick = { navController.navigate("video_stream") },
+                    title = stringResource(R.string.video_stream_service),
+                    description = stringResource(R.string.video_stream_service_description),
+                    onClick = { navController.navigate(AppDestination.VideoStream) },
                 )
             }
 
@@ -99,13 +102,13 @@ fun DashPage(navController: NavController) {
                     iconContent = {
                         Icon(
                             imageVector = TablerIcons.Bluetooth,
-                            contentDescription = "蓝牙设备",
+                            contentDescription = stringResource(R.string.bluetooth_devices),
                             modifier = Modifier.size(22.dp),
                         )
                     },
-                    title = "蓝牙设备",
-                    description = "扫描并连接 BLE 外设",
-                    onClick = { navController.navigate("bluetooth") },
+                    title = stringResource(R.string.bluetooth_devices),
+                    description = stringResource(R.string.bluetooth_devices_description),
+                    onClick = { navController.navigate(AppDestination.Bluetooth) },
                 )
             }
         }
@@ -143,7 +146,7 @@ private fun ServiceCard(
             trailingContent = {
                 Icon(
                     imageVector = TablerIcons.ChevronRight,
-                    contentDescription = "进入",
+                    contentDescription = stringResource(R.string.enter),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )

@@ -1,6 +1,7 @@
 package compose.iot.mqtt
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,8 +16,11 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.inject.Inject
 
-class HomeAssistantManager(private val context: Context) {
+class HomeAssistantManager @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+) {
     private var serverUrl: String = ""
     private var accessToken: String = ""
     private val scope = CoroutineScope(Dispatchers.IO + Job())

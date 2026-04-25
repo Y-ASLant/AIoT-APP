@@ -20,7 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import compose.iot.R
 
 /**
  * 滑块控制卡片内容
@@ -77,7 +79,7 @@ fun SliderCardContent(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "实时控制",
+                    text = stringResource(R.string.slider_realtime_control),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )

@@ -2,10 +2,19 @@
 
 package compose.iot.ui.theme.page
 
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
@@ -13,19 +22,46 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.Plus
 import compose.iot.R
 import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
@@ -46,27 +82,47 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun IndexPage(viewModel: IndexViewModel = viewModel()) {
+fun IndexPage(viewModel: IndexViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is UiEvent.ShowSnackbar ->
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
             }
         }
     }
+
+    val callbacks =
+        remember(viewModel) {
+            IndexPageCallbacks(
+                onShowAddDialog = viewModel::showAddDialog,
+                onSelectDeviceType = viewModel::selectDeviceType,
+                onShowHistory = viewModel::showHistory,
+                onEditCard = viewModel::editCard,
+                onToggleSwitch = viewModel::toggleSwitch,
+                onChangeSlider = viewModel::changeSlider,
+                onToggleContinuousMode = viewModel::toggleContinuousMode,
+                onPressButton = viewModel::pressButton,
+                onSendInput = viewModel::sendInput,
+                onDismissHistory = viewModel::dismissHistory,
+                onClearHistory = viewModel::clearHistory,
+                onDismissDialog = viewModel::dismissDialog,
+                onSaveCard = viewModel::saveCard,
+                onDeleteCard = viewModel::deleteCard,
+            )
+        }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("设备中心", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
+                title = { Text(stringResource(R.string.device_center), fontWeight = FontWeight.SemiBold) },
                 scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -75,16 +131,14 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                     ),
             )
         },
-        contentWindowInsets = WindowInsets(0.dp),
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp),
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {
-                    viewModel.showAddDialog()
-                },
+                onClick = callbacks.onShowAddDialog,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
-                Icon(TablerIcons.Plus, contentDescription = "添加监控参数")
+                Icon(TablerIcons.Plus, contentDescription = stringResource(R.string.add_device))
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -105,7 +159,7 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
             LaunchedEffect(pagerState.currentPage) {
                 val targetType = if (pagerState.currentPage == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
                 if (uiState.selectedDeviceType != targetType) {
-                    viewModel.selectDeviceType(targetType)
+                    callbacks.onSelectDeviceType(targetType)
                 }
             }
 
@@ -118,22 +172,22 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                 SegmentedButton(
                     selected = uiState.selectedDeviceType == DeviceType.SENSOR,
                     onClick = {
-                        viewModel.selectDeviceType(DeviceType.SENSOR)
+                        callbacks.onSelectDeviceType(DeviceType.SENSOR)
                         scope.launch { pagerState.animateScrollToPage(0) }
                     },
                     shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                 ) {
-                    Text(text = "传感器")
+                    Text(text = stringResource(R.string.device_type_sensor))
                 }
                 SegmentedButton(
                     selected = uiState.selectedDeviceType == DeviceType.ACTUATOR,
                     onClick = {
-                        viewModel.selectDeviceType(DeviceType.ACTUATOR)
+                        callbacks.onSelectDeviceType(DeviceType.ACTUATOR)
                         scope.launch { pagerState.animateScrollToPage(1) }
                     },
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 ) {
-                    Text(text = "执行器")
+                    Text(text = stringResource(R.string.device_type_actuator))
                 }
             }
 
@@ -142,20 +196,13 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                 modifier = Modifier.weight(1f),
             ) { page ->
                 val type = if (page == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
-
                 val filteredCards by remember(page, uiState.subscriptionCards) {
-                    derivedStateOf {
-                        uiState.subscriptionCards.filter {
-                            it.deviceType == type
-                        }
-                    }
+                    derivedStateOf { uiState.subscriptionCards.filter { it.deviceType == type } }
                 }
-
-                val pageGridState = rememberLazyStaggeredGridState()
 
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),
-                    state = pageGridState,
+                    state = rememberLazyStaggeredGridState(),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -180,7 +227,7 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
                                 value = uiState.cardValues[card.cardId],
                                 isLoading = card.cardId in uiState.loadingCards,
                                 continuousSliderMode = uiState.continuousSliderMode,
-                                viewModel = viewModel,
+                                callbacks = callbacks,
                             )
                         }
                     }
@@ -195,29 +242,48 @@ fun IndexPage(viewModel: IndexViewModel = viewModel()) {
             sensorName = selectedSensorCard.displayName,
             unitSuffix = selectedSensorCard.unitSuffix,
             historyData = uiState.sensorHistoryData,
-            onDismiss = viewModel::dismissHistory,
-            onClearHistory = viewModel::clearHistory,
+            onDismiss = callbacks.onDismissHistory,
+            onClearHistory = callbacks.onClearHistory,
         )
     }
 
     if (uiState.showSubscribeDialog) {
         MqttSubscribeDialog(
-            onDismissRequest = viewModel::dismissDialog,
+            onDismissRequest = callbacks.onDismissDialog,
             editingCard = uiState.editingCard,
-            onDelete = uiState.editingCard?.let { card -> { viewModel.deleteCard(card) } },
-            onSubscribe = { card ->
-                viewModel.saveCard(card, uiState.editingCard)
-            },
+            onDelete = uiState.editingCard?.let { card -> { callbacks.onDeleteCard(card) } },
+            onSubscribe = { card -> callbacks.onSaveCard(card, uiState.editingCard) },
         )
     }
 }
 
-// region ── 子组件 ──
+@Stable
+private data class IndexPageCallbacks(
+    val onShowAddDialog: () -> Unit,
+    val onSelectDeviceType: (DeviceType) -> Unit,
+    val onShowHistory: (SubscriptionCard) -> Unit,
+    val onEditCard: (SubscriptionCard) -> Unit,
+    val onToggleSwitch: (SubscriptionCard, Boolean) -> Unit,
+    val onChangeSlider: (SubscriptionCard, Float) -> Unit,
+    val onToggleContinuousMode: (Boolean) -> Unit,
+    val onPressButton: (SubscriptionCard, onComplete: () -> Unit, onError: (String) -> Unit) -> Unit,
+    val onSendInput: (SubscriptionCard, String, onComplete: () -> Unit, onError: (String) -> Unit) -> Unit,
+    val onDismissHistory: () -> Unit,
+    val onClearHistory: () -> Unit,
+    val onDismissDialog: () -> Unit,
+    val onSaveCard: (SubscriptionCard, SubscriptionCard?) -> Unit,
+    val onDeleteCard: (SubscriptionCard) -> Unit,
+)
 
 @Composable
 private fun EmptyState(deviceType: DeviceType) {
     val iconId = if (deviceType == DeviceType.SENSOR) R.drawable.fluentiot24regular else R.drawable.terminalboxline
-    val typeText = if (deviceType == DeviceType.SENSOR) "传感器" else "执行器"
+    val typeText =
+        if (deviceType == DeviceType.SENSOR) {
+            stringResource(R.string.device_type_sensor)
+        } else {
+            stringResource(R.string.device_type_actuator)
+        }
 
     Box(
         modifier =
@@ -232,17 +298,17 @@ private fun EmptyState(deviceType: DeviceType) {
         ) {
             Icon(
                 painter = painterResource(id = iconId),
-                contentDescription = "暂无$typeText",
+                contentDescription = stringResource(R.string.empty_device_content_description, typeText),
                 modifier = Modifier.size(72.dp),
                 tint = MaterialTheme.colorScheme.outlineVariant,
             )
             Text(
-                text = "还没有${typeText}设备",
+                text = stringResource(R.string.empty_device_title, typeText),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "点击右下角 + 按钮添加$typeText",
+                text = stringResource(R.string.empty_device_subtitle, typeText),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center,
@@ -258,7 +324,7 @@ private fun DeviceCardItem(
     value: String?,
     isLoading: Boolean,
     continuousSliderMode: Boolean,
-    viewModel: IndexViewModel,
+    callbacks: IndexPageCallbacks,
 ) {
     val cardModifier =
         Modifier
@@ -267,9 +333,9 @@ private fun DeviceCardItem(
             .clip(MaterialTheme.shapes.small)
             .combinedClickable(
                 onClick = {
-                    if (card.deviceType == DeviceType.SENSOR) viewModel.showHistory(card)
+                    if (card.deviceType == DeviceType.SENSOR) callbacks.onShowHistory(card)
                 },
-                onLongClick = { viewModel.editCard(card) },
+                onLongClick = { callbacks.onEditCard(card) },
             )
 
     val cardContent: @Composable ColumnScope.() -> Unit = {
@@ -287,7 +353,7 @@ private fun DeviceCardItem(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CardBody(card, value, isLoading, continuousSliderMode, viewModel)
+                CardBody(card, value, isLoading, continuousSliderMode, callbacks)
             }
         }
     }
@@ -307,10 +373,7 @@ private fun DeviceCardItem(
         CardStyle.FILLED ->
             Card(
                 modifier = cardModifier,
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 content = cardContent,
             )
     }
@@ -330,12 +393,12 @@ private fun CardHeader(card: SubscriptionCard) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SuggestionChip(
-                onClick = { },
+                onClick = {},
                 label = {
                     Text(
                         when (card.deviceType) {
-                            DeviceType.SENSOR -> "传感器"
-                            DeviceType.ACTUATOR -> "执行器"
+                            DeviceType.SENSOR -> stringResource(R.string.device_type_sensor)
+                            DeviceType.ACTUATOR -> stringResource(R.string.device_type_actuator)
                         },
                         style = MaterialTheme.typography.labelSmall,
                     )
@@ -356,12 +419,12 @@ private fun CardHeader(card: SubscriptionCard) {
                 border = null,
             )
             SuggestionChip(
-                onClick = { },
+                onClick = {},
                 label = {
                     Text(
                         when (card.serverType) {
-                            ServerType.EMQX -> "EMQX"
-                            ServerType.HomeAssistant -> "HA"
+                            ServerType.EMQX -> stringResource(R.string.server_type_emqx)
+                            ServerType.HomeAssistant -> stringResource(R.string.server_type_ha)
                         },
                         style = MaterialTheme.typography.labelSmall,
                     )
@@ -383,7 +446,7 @@ private fun CardBody(
     value: String?,
     isLoading: Boolean,
     continuousSliderMode: Boolean,
-    viewModel: IndexViewModel,
+    callbacks: IndexPageCallbacks,
 ) {
     if (card.deviceType == DeviceType.SENSOR) {
         SensorCardContent(value = value, unitSuffix = card.unitSuffix)
@@ -393,7 +456,7 @@ private fun CardBody(
                 SwitchCardContent(
                     isOn = card.isSwitchOn(value),
                     isLoading = isLoading,
-                    onToggle = { newState -> viewModel.toggleSwitch(card, newState) },
+                    onToggle = { newState -> callbacks.onToggleSwitch(card, newState) },
                 )
             }
             card.isSliderStyle -> {
@@ -405,27 +468,21 @@ private fun CardBody(
                     step = card.sliderStep,
                     unitSuffix = card.unitSuffix,
                     continuousMode = continuousSliderMode,
-                    onValueChange = { v -> viewModel.changeSlider(card, v) },
-                    onValueChangeFinished = { v -> viewModel.changeSlider(card, v) },
-                    onToggleContinuousMode = viewModel::toggleContinuousMode,
+                    onValueChange = { v -> callbacks.onChangeSlider(card, v) },
+                    onValueChangeFinished = { v -> callbacks.onChangeSlider(card, v) },
+                    onToggleContinuousMode = callbacks.onToggleContinuousMode,
                 )
             }
             card.isPushButtonStyle -> {
                 PushButtonCardContent(
-                    onPress = { onComplete, onError ->
-                        viewModel.pressButton(card, onComplete, onError)
-                    },
+                    onPress = { onComplete, onError -> callbacks.onPressButton(card, onComplete, onError) },
                 )
             }
             else -> {
                 InputCardContent(
-                    onSend = { text, onComplete, onError ->
-                        viewModel.sendInput(card, text, onComplete, onError)
-                    },
+                    onSend = { text, onComplete, onError -> callbacks.onSendInput(card, text, onComplete, onError) },
                 )
             }
         }
     }
 }
-
-// endregion

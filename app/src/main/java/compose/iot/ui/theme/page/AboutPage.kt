@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -24,6 +26,7 @@ import androidx.navigation.NavController
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import compose.iot.R
+import compose.iot.navigation.AppDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,7 +82,7 @@ fun AboutPage(navController: NavController) {
 
     compose.iot.ui.components.AppScaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        title = "关于",
+        title = stringResource(R.string.about_title),
         navController = navController,
         showBackButton = false,
         scrollBehavior = scrollBehavior,
@@ -101,7 +104,7 @@ fun AboutPage(navController: NavController) {
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "物联网数据监控平台",
+                text = stringResource(R.string.app_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
@@ -133,7 +136,7 @@ fun AboutPage(navController: NavController) {
                 ) {
                     Column {
                         Text(
-                            text = "作者：ASLant",
+                            text = stringResource(R.string.author_name),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -146,7 +149,7 @@ fun AboutPage(navController: NavController) {
                     }
                     Icon(
                         imageVector = TablerIcons.BrandGithub,
-                        contentDescription = "GitHub",
+                        contentDescription = stringResource(R.string.github),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(24.dp),
                     )
@@ -171,18 +174,12 @@ fun AboutPage(navController: NavController) {
                     modifier = Modifier.padding(16.dp),
                 ) {
                     Text(
-                        text = "关于此工具",
+                        text = stringResource(R.string.about_this_tool),
                         style = MaterialTheme.typography.titleLarge,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text =
-                            "✨ Jetpack Compose + Kotlin\n" +
-                                "💫 Material Design 3\n" +
-                                "🍀 MQTT & Home Assistant\n" +
-                                "🔍 实时数据监控与可视化\n" +
-                                "🗼 丰富的 Card 自定义选项\n" +
-                                "🛠️ 手动添加传感 / 执行器设备",
+                        text = stringResource(R.string.about_features),
                         style = MaterialTheme.typography.bodyMedium,
                         lineHeight = 24.sp,
                     )
@@ -203,7 +200,7 @@ fun AboutPage(navController: NavController) {
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 onClick = {
-                    navController.navigate("changelog") {
+                    navController.navigate(AppDestination.Changelog) {
                         launchSingleTop = true
                     }
                 },
@@ -217,12 +214,12 @@ fun AboutPage(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "更新日志",
+                        text = stringResource(R.string.changelog),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Icon(
                         imageVector = TablerIcons.ChevronRight,
-                        contentDescription = "查看更新日志",
+                        contentDescription = stringResource(R.string.view_changelog),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
                     )
@@ -248,13 +245,17 @@ fun AboutPage(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = "AIOT Version $currentVersionName",
+                        text = stringResource(R.string.app_version, currentVersionName),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "更新日期: $versionCode · © ${java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)} ASLant",
+                        text = stringResource(
+                            R.string.update_date_line,
+                            versionCode,
+                            java.util.Calendar.getInstance().get(java.util.Calendar.YEAR),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -266,7 +267,7 @@ fun AboutPage(navController: NavController) {
                             if (!isCheckingUpdate) {
                                 isCheckingUpdate = true
                                 if (!isNetworkAvailable(context)) {
-                                    updateMessage = "网络连接不可用，请检查网络设置"
+                                    updateMessage = context.getString(R.string.network_unavailable_check_settings)
                                     isCheckingUpdate = false
                                     return@FilledTonalButton
                                 }
@@ -281,11 +282,15 @@ fun AboutPage(navController: NavController) {
                                             showUpdateDialog = true
                                         } else {
                                             Timber.d("没有发现新版本")
-                                            updateMessage = "已是最新版本"
+                                            updateMessage = context.getString(R.string.already_latest_version)
                                         }
                                     } catch (e: Exception) {
                                         Timber.e(e, "检查更新失败")
-                                        updateMessage = "检查更新失败: ${e.message ?: "未知错误"}"
+                                        updateMessage =
+                                            context.getString(
+                                                R.string.check_update_failed,
+                                                e.message ?: context.getString(R.string.unknown_error),
+                                            )
                                     } finally {
                                         isCheckingUpdate = false
                                     }
@@ -304,12 +309,12 @@ fun AboutPage(navController: NavController) {
                         } else {
                             Icon(
                                 painter = painterResource(id = R.drawable.download),
-                                contentDescription = "检查更新",
+                                contentDescription = stringResource(R.string.check_updates),
                                 modifier = Modifier.size(18.dp),
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (isCheckingUpdate) "正在检查…" else "检查更新")
+                        Text(if (isCheckingUpdate) stringResource(R.string.checking_updates) else stringResource(R.string.check_updates))
                     }
                 }
             }
@@ -335,7 +340,7 @@ fun AboutPage(navController: NavController) {
             },
             title = {
                 Text(
-                    text = "发现新版本",
+                    text = stringResource(R.string.new_version_found),
                     style = MaterialTheme.typography.headlineSmall,
                 )
             },
@@ -348,7 +353,7 @@ fun AboutPage(navController: NavController) {
                     ) {
                         Column {
                             Text(
-                                text = "当前版本",
+                                text = stringResource(R.string.current_version),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -359,7 +364,7 @@ fun AboutPage(navController: NavController) {
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = "最新版本",
+                                text = stringResource(R.string.latest_version),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -375,7 +380,7 @@ fun AboutPage(navController: NavController) {
 
                     // 安装包大小
                     Text(
-                        text = "安装包大小: ${updateInfo?.apkSize ?: "未知"}",
+                        text = stringResource(R.string.apk_size, updateInfo?.apkSize ?: stringResource(R.string.unknown_size)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -386,7 +391,7 @@ fun AboutPage(navController: NavController) {
 
                     // 更新内容标题
                     Text(
-                        text = "更新内容",
+                        text = stringResource(R.string.update_content),
                         style = MaterialTheme.typography.titleSmall,
                     )
 
@@ -436,12 +441,12 @@ fun AboutPage(navController: NavController) {
                         showUpdateDialog = false
                     },
                 ) {
-                    Text("立即更新")
+                    Text(stringResource(R.string.update_now))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showUpdateDialog = false }) {
-                    Text("稍后再说")
+                    Text(stringResource(R.string.maybe_later))
                 }
             },
         )

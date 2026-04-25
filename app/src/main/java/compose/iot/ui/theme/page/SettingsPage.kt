@@ -5,49 +5,70 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import compose.iot.AppState
-import compose.iot.data.preferences.PreferencesManager
+import compose.iot.mqtt.MqttForegroundService
+import compose.iot.navigation.AppDestination
+import compose.iot.R
+import compose.iot.ui.app.LocalAppSettingsViewModel
+import compose.iot.ui.components.AppScaffold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPage(navController: NavController) {
     val context = LocalContext.current
-    val prefs = remember { PreferencesManager(context) }
+    val settingsViewModel = LocalAppSettingsViewModel.current
+    val appSettings by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val permissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) { isGranted ->
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                compose.iot.mqtt.MqttForegroundService.start(context)
+                MqttForegroundService.start(context)
             }
         }
 
-    compose.iot.ui.components.AppScaffold(
+    AppScaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        title = "首选项",
+        title = stringResource(R.string.settings_title),
         navController = navController,
         showBackButton = false,
         scrollBehavior = scrollBehavior,
-    ) { innerPadding ->
+    ) { _ ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(0.dp),
         ) {
             item {
                 Text(
-                    text = "界面",
+                    text = stringResource(R.string.settings_section_ui),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
@@ -62,27 +83,21 @@ fun SettingsPage(navController: NavController) {
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         ListItem(
-                            headlineContent = { Text("应用主题") },
-                            supportingContent = { Text("动态取色与深色模式配置") },
-                            modifier = Modifier.clickable { navController.navigate("app_theme") },
+                            headlineContent = { Text(stringResource(R.string.app_theme)) },
+                            supportingContent = { Text(stringResource(R.string.app_theme_description)) },
+                            modifier = Modifier.clickable { navController.navigate(AppDestination.AppTheme) },
                             colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                         )
 
                         ListItem(
-                            headlineContent = { Text("系统圆角风格") },
-                            supportingContent = { Text("调整全局组件的圆角度数") },
+                            headlineContent = { Text(stringResource(R.string.system_corner_style)) },
+                            supportingContent = { Text(stringResource(R.string.system_corner_style_description)) },
                             colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                         )
 
-                        val currentLevel = AppState.cornerShapeLevel.intValue
-
                         Slider(
-                            value = currentLevel.toFloat(),
-                            onValueChange = { newValue ->
-                                val level = newValue.toInt()
-                                AppState.cornerShapeLevel.intValue = level
-                                prefs.cornerShapeLevel = level
-                            },
+                            value = appSettings.cornerShapeLevel.toFloat(),
+                            onValueChange = { settingsViewModel.updateCornerShapeLevel(it.toInt()) },
                             valueRange = 0f..2f,
                             steps = 1,
                             modifier = Modifier.padding(horizontal = 16.dp),
@@ -91,28 +106,24 @@ fun SettingsPage(navController: NavController) {
                             modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text("小圆角", style = MaterialTheme.typography.labelMedium)
-                            Text("默认", style = MaterialTheme.typography.labelMedium)
-                            Text("大圆角", style = MaterialTheme.typography.labelMedium)
+                            Text(stringResource(R.string.corner_small), style = MaterialTheme.typography.labelMedium)
+                            Text(stringResource(R.string.corner_default), style = MaterialTheme.typography.labelMedium)
+                            Text(stringResource(R.string.corner_large), style = MaterialTheme.typography.labelMedium)
                         }
 
-                        if (android.os.Build.VERSION.SDK_INT >= 34) {
+                        if (Build.VERSION.SDK_INT >= 34) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                             )
 
-                            val predictiveBack = AppState.predictiveBackEnabled.value
                             ListItem(
-                                headlineContent = { Text("预测性返回动画") },
-                                supportingContent = { Text("在 Android 14+ 开启高级侧滑返回动效") },
+                                headlineContent = { Text(stringResource(R.string.predictive_back_animation)) },
+                                supportingContent = { Text(stringResource(R.string.predictive_back_animation_description)) },
                                 trailingContent = {
                                     Switch(
-                                        checked = predictiveBack,
-                                        onCheckedChange = { isChecked ->
-                                            AppState.predictiveBackEnabled.value = isChecked
-                                            prefs.predictiveBackEnabled = isChecked
-                                        },
+                                        checked = appSettings.predictiveBackEnabled,
+                                        onCheckedChange = settingsViewModel::updatePredictiveBack,
                                     )
                                 },
                                 colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
@@ -124,7 +135,7 @@ fun SettingsPage(navController: NavController) {
 
             item {
                 Text(
-                    text = "后台服务",
+                    text = stringResource(R.string.settings_section_background),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
@@ -132,21 +143,19 @@ fun SettingsPage(navController: NavController) {
             }
 
             item {
-                val keepAlive = AppState.appKeepAlive.value
                 Card(
                     shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 ) {
                     ListItem(
-                        headlineContent = { Text("通知栏保活") },
-                        supportingContent = { Text("开启通知栏常驻，保证软件在后台连接稳定") },
+                        headlineContent = { Text(stringResource(R.string.notification_keep_alive)) },
+                        supportingContent = { Text(stringResource(R.string.notification_keep_alive_description)) },
                         trailingContent = {
                             Switch(
-                                checked = keepAlive,
+                                checked = appSettings.appKeepAlive,
                                 onCheckedChange = { isChecked ->
-                                    AppState.appKeepAlive.value = isChecked
-                                    prefs.appKeepAlive = isChecked
+                                    settingsViewModel.updateAppKeepAlive(isChecked)
                                     if (isChecked) {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                             val isGranted =
@@ -158,13 +167,13 @@ fun SettingsPage(navController: NavController) {
                                             if (!isGranted) {
                                                 permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                                             } else {
-                                                compose.iot.mqtt.MqttForegroundService.start(context)
+                                                MqttForegroundService.start(context)
                                             }
                                         } else {
-                                            compose.iot.mqtt.MqttForegroundService.start(context)
+                                            MqttForegroundService.start(context)
                                         }
                                     } else {
-                                        compose.iot.mqtt.MqttForegroundService.stop(context)
+                                        MqttForegroundService.stop(context)
                                     }
                                 },
                             )

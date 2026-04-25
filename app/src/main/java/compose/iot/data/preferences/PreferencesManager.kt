@@ -4,12 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import compose.iot.mqtt.DeviceType
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
 /**
  * 统一 SharedPreferences 管理器
  * 集中管理分散在多个 Prefs 文件中的持久化访问
  */
-class PreferencesManager(private val context: Context) {
+class PreferencesManager @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+) {
     // region ── SharedPreferences 实例 ──
 
     private val mqttPrefs: SharedPreferences

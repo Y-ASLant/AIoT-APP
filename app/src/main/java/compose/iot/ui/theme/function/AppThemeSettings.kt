@@ -8,33 +8,68 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
-import compose.iot.AppState
-import compose.iot.data.preferences.PreferencesManager
-import compose.iot.ui.theme.ui.theme.*
+import compose.icons.tablericons.ChevronLeft
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.MoonStars
+import compose.icons.tablericons.Server
+import compose.icons.tablericons.Settings
+import compose.icons.tablericons.Sun
+import compose.iot.R
+import compose.iot.ui.app.LocalAppSettingsViewModel
 
-enum class AppDarkMode(val value: Int, val title: String, val icon: ImageVector) {
-    Auto(0, "自动", TablerIcons.Settings),
-    Light(1, "浅色", TablerIcons.Sun),
-    Dark(2, "深色", TablerIcons.MoonStars),
+enum class AppDarkMode(val value: Int, val titleRes: Int, val icon: ImageVector) {
+    Auto(0, R.string.theme_mode_auto, TablerIcons.Settings),
+    Light(1, R.string.theme_mode_light, TablerIcons.Sun),
+    Dark(2, R.string.theme_mode_dark, TablerIcons.MoonStars),
 }
 
 data class ThemeColorItemData(
@@ -47,50 +82,37 @@ data class ThemeColorItemData(
 
 val AppThemeColorsList =
     listOf(
-        // ID 0 is Dynamic
-        // Blue
         ThemeColorItemData(1, Color(0xFF0061A4), Color(0xFF9ECAFF), Color(0xFFD1E4FF), Color(0xFFD7E2FF)),
-        // Default M3 Purple
         ThemeColorItemData(2, Color(0xFF6750A4), Color(0xFFD0BCFF), Color(0xFFEADDFF), Color(0xFFFFD8E4)),
-        // Orange
         ThemeColorItemData(3, Color(0xFF825500), Color(0xFFFFB951), Color(0xFFFFDDB3), Color(0xFFFFDEAC)),
-        // Mint Green
         ThemeColorItemData(4, Color(0xFF006C4C), Color(0xFF41E0A0), Color(0xFF89F8C7), Color(0xFFCDE8DF)),
-        // Aqua
         ThemeColorItemData(5, Color(0xFF006874), Color(0xFF4FD8EB), Color(0xFF97F0FF), Color(0xFFB1EBF2)),
-        // Rose
         ThemeColorItemData(6, Color(0xFF984061), Color(0xFFFFB0C8), Color(0xFFFFD9E2), Color(0xFFFFD9E2)),
-        // Forest
         ThemeColorItemData(7, Color(0xFF386A20), Color(0xFF9CD67D), Color(0xFFB7F397), Color(0xFFD3E7CD)),
-        // Rust
         ThemeColorItemData(8, Color(0xFF9C432A), Color(0xFFFFB4A4), Color(0xFFFFDAD3), Color(0xFFFFDBD1)),
     )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppThemePage(navController: NavController) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val prefs = remember { PreferencesManager(context) }
+    val settingsViewModel = LocalAppSettingsViewModel.current
+    val appSettings by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val isSystemDark = isSystemInDarkTheme()
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("应用主题") },
+                title = { Text(stringResource(R.string.app_theme)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            TablerIcons.ChevronLeft,
-                            contentDescription = "返回",
-                        )
+                    IconButton(onClick = navController::navigateUp) {
+                        Icon(TablerIcons.ChevronLeft, contentDescription = stringResource(R.string.back))
                     }
                 },
                 scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        containerColor = Color.Transparent,
                         scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ),
             )
@@ -103,39 +125,27 @@ fun AppThemePage(navController: NavController) {
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState()),
         ) {
-            // Preview Mockup
             ExampleThemePreview()
-
-            TitleItem(text = "调色板")
+            TitleItem(text = stringResource(R.string.palette))
 
             val isDarkTheme =
-                when (AppState.darkMode.intValue) {
+                when (appSettings.darkMode) {
                     AppDarkMode.Light.value -> false
                     AppDarkMode.Dark.value -> true
                     else -> isSystemDark
                 }
 
             ThemePaletteItem(
-                themeColor = AppState.themeColor.intValue,
+                themeColor = appSettings.themeColor,
                 isDarkMode = isDarkTheme,
-                enabled = AppState.darkMode.intValue != AppDarkMode.Auto.value,
-                onChange = {
-                    AppState.themeColor.intValue = it
-                    prefs.themeColor = it
-                },
+                enabled = appSettings.darkMode != AppDarkMode.Auto.value,
+                onChange = settingsViewModel::updateThemeColor,
             )
 
-            TitleItem(text = "深色模式")
+            TitleItem(text = stringResource(R.string.dark_mode))
             DarkModeItem(
-                currentMode = AppState.darkMode.intValue,
-                onChange = {
-                    AppState.darkMode.intValue = it
-                    prefs.darkMode = it
-                    if (it == AppDarkMode.Auto.value) {
-                        AppState.themeColor.intValue = 0
-                        prefs.themeColor = 0
-                    }
-                },
+                currentMode = appSettings.darkMode,
+                onChange = settingsViewModel::updateDarkMode,
             )
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -184,7 +194,6 @@ fun ExampleThemePreview() {
                 ) {}
 
                 Spacer(modifier = Modifier.height(80.dp))
-
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.height(45.dp).fillMaxWidth(),
@@ -195,14 +204,13 @@ fun ExampleThemePreview() {
 }
 
 @Composable
-internal fun TitleItem(
-    text: String,
-) = Text(
-    text = text,
-    style = MaterialTheme.typography.titleSmall,
-    color = MaterialTheme.colorScheme.primary,
-    modifier = Modifier.padding(start = 18.dp, top = 24.dp),
-)
+internal fun TitleItem(text: String) =
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 18.dp, top = 24.dp),
+    )
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -221,16 +229,15 @@ fun ThemePaletteItem(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val pContext = androidx.compose.ui.platform.LocalContext.current
-            val dynamicColorScheme = if (isDarkMode) dynamicDarkColorScheme(pContext) else dynamicLightColorScheme(pContext)
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val dynamicScheme = if (isDarkMode) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             ThemeColorBox(
                 selected = themeColor == 0,
                 enabled = enabled,
-                colorName = "动态",
-                primaryColor = dynamicColorScheme.primary,
-                primaryContainer = dynamicColorScheme.primaryContainer,
-                tertiaryContainer = dynamicColorScheme.tertiaryContainer,
-                onPrimary = dynamicColorScheme.onPrimary,
+                primaryColor = dynamicScheme.primary,
+                primaryContainer = dynamicScheme.primaryContainer,
+                tertiaryContainer = dynamicScheme.tertiaryContainer,
+                onPrimary = dynamicScheme.onPrimary,
                 onClick = { onChange(0) },
             )
         }
@@ -239,7 +246,6 @@ fun ThemePaletteItem(
             ThemeColorBox(
                 selected = themeColor == colorData.id,
                 enabled = enabled,
-                colorName = null,
                 primaryColor = if (isDarkMode) colorData.primaryDark else colorData.primaryLight,
                 primaryContainer = if (isDarkMode) colorData.primaryDark.copy(alpha = 0.3f) else colorData.primaryContainerLight,
                 tertiaryContainer = if (isDarkMode) colorData.primaryDark.copy(alpha = 0.25f) else colorData.tertiaryContainerLight,
@@ -254,7 +260,6 @@ fun ThemePaletteItem(
 private fun ThemeColorBox(
     selected: Boolean,
     enabled: Boolean,
-    colorName: String?,
     primaryColor: Color,
     primaryContainer: Color,
     tertiaryContainer: Color,
@@ -262,7 +267,6 @@ private fun ThemeColorBox(
     onClick: () -> Unit,
 ) {
     val boxColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-
     Box(
         modifier =
             Modifier
@@ -328,8 +332,7 @@ fun DarkModeItem(
     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
     horizontalArrangement = Arrangement.spacedBy(15.dp),
 ) {
-    val modes = AppDarkMode.values()
-    items(modes) { item ->
+    items(AppDarkMode.entries.toTypedArray()) { item ->
         val selected = item.value == currentMode
         Box(
             modifier =
@@ -365,7 +368,7 @@ fun DarkModeItem(
                 )
 
                 Text(
-                    text = item.title,
+                    text = stringResource(item.titleRes),
                     style = MaterialTheme.typography.labelLarge,
                     color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )

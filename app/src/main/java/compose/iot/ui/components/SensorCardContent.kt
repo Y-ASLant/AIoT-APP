@@ -7,6 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import compose.iot.R
 
 /**
  * 传感器数据展示卡片内容
@@ -26,8 +28,8 @@ fun SensorCardContent(
         Text(
             text =
                 when (value) {
-                    null -> "等待数据..."
-                    "unknown" -> "状态未知"
+                    null -> stringResource(R.string.sensor_waiting)
+                    "unknown" -> stringResource(R.string.sensor_unknown)
                     else -> "$value$unitSuffix"
                 },
             style = MaterialTheme.typography.headlineMedium,

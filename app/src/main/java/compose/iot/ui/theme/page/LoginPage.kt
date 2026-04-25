@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -19,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import compose.iot.R
+import compose.iot.data.preferences.PreferencesManager
 import compose.iot.mqtt.MqttManager
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,11 +29,11 @@ import compose.iot.mqtt.MqttManager
 fun LoginPage(
     navController: NavController? = null,
     mqttManager: MqttManager,
+    preferencesManager: PreferencesManager,
 ) {
     val context = LocalContext.current
     var isConnected by remember { mutableStateOf(mqttManager.isConnected()) }
 
-    val preferencesManager = remember { (context.applicationContext as compose.iot.AiotApp).preferencesManager }
     var serverIp by remember { mutableStateOf(preferencesManager.mqttServerIp) }
     var serverPort by remember { mutableStateOf(preferencesManager.mqttServerPort) }
     var clientId by remember { mutableStateOf(preferencesManager.mqttClientId) }
@@ -56,7 +59,7 @@ fun LoginPage(
         mqttManager.connect(
             onConnectComplete = {
                 isConnected = true
-                Toast.makeText(context, "服务器连接成功", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.server_connection_success), Toast.LENGTH_SHORT).show()
             },
             onError = { error ->
                 isConnected = false
@@ -66,7 +69,7 @@ fun LoginPage(
     }
 
     compose.iot.ui.components.AppScaffold(
-        title = "MQTT 连接设置",
+        title = stringResource(R.string.mqtt_connection_settings),
         navController = navController,
     ) { _ ->
         Column(
@@ -115,14 +118,14 @@ fun LoginPage(
                     Spacer(modifier = Modifier.width(20.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isConnected) "已连接到服务器" else "服务器未连接",
+                            text = if (isConnected) stringResource(R.string.server_connected) else stringResource(R.string.server_not_connected),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = onStatusColor,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (isConnected) "$serverIp:$serverPort" else "请检查网络或配置信息",
+                            text = if (isConnected) "$serverIp:$serverPort" else stringResource(R.string.check_network_or_config),
                             style = MaterialTheme.typography.bodyMedium,
                             color = onStatusColor.copy(alpha = 0.8f),
                         )
@@ -141,7 +144,7 @@ fun LoginPage(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "网络凭证",
+                        text = stringResource(R.string.network_credentials),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
@@ -153,12 +156,12 @@ fun LoginPage(
                             selected = mqttVersion == 3,
                             onClick = { mqttVersion = 3 },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                        ) { Text("v3.1.1", style = MaterialTheme.typography.labelMedium) }
+                        ) { Text(stringResource(R.string.mqtt_version_311), style = MaterialTheme.typography.labelMedium) }
                         SegmentedButton(
                             selected = mqttVersion == 5,
                             onClick = { mqttVersion = 5 },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        ) { Text("v5.0", style = MaterialTheme.typography.labelMedium) }
+                        ) { Text(stringResource(R.string.mqtt_version_50), style = MaterialTheme.typography.labelMedium) }
                     }
                 }
 
@@ -169,7 +172,7 @@ fun LoginPage(
                     OutlinedTextField(
                         value = serverIp,
                         onValueChange = { serverIp = it },
-                        label = { Text("服务器地址") },
+                        label = { Text(stringResource(R.string.server_address)) },
                         leadingIcon = { Icon(TablerIcons.MapPin, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                         modifier = Modifier.weight(0.7f),
@@ -179,7 +182,7 @@ fun LoginPage(
                     OutlinedTextField(
                         value = serverPort,
                         onValueChange = { serverPort = it },
-                        label = { Text("端口") },
+                        label = { Text(stringResource(R.string.port)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                         modifier = Modifier.weight(0.3f),
                         singleLine = true,
@@ -190,7 +193,7 @@ fun LoginPage(
                 OutlinedTextField(
                     value = clientId,
                     onValueChange = { clientId = it },
-                    label = { Text("Client ID") },
+                    label = { Text(stringResource(R.string.client_id)) },
                     leadingIcon = { Icon(TablerIcons.MoodSmile, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
@@ -199,7 +202,7 @@ fun LoginPage(
                 )
 
                 Text(
-                    text = "身份验证",
+                    text = stringResource(R.string.authentication),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
@@ -209,7 +212,7 @@ fun LoginPage(
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("用户名") },
+                    label = { Text(stringResource(R.string.username)) },
                     leadingIcon = { Icon(TablerIcons.User, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                     modifier = Modifier.fillMaxWidth(),
@@ -220,7 +223,7 @@ fun LoginPage(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("密码") },
+                    label = { Text(stringResource(R.string.password)) },
                     leadingIcon = { Icon(TablerIcons.Lock, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -246,8 +249,8 @@ fun LoginPage(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column {
-                            Text("后台自动连接", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                            Text("应用启动时自动接入云端", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.background_auto_connect), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.background_auto_connect_description), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(
                             checked = autoConnect,
@@ -268,7 +271,7 @@ fun LoginPage(
                         } else {
                             mqttManager.disconnect()
                             isConnected = false
-                            Toast.makeText(context, "MQTT服务器已断开", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.mqtt_disconnected), Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier =
@@ -289,7 +292,7 @@ fun LoginPage(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = if (isConnected) "断开当前连接" else "建立安全连接",
+                        text = if (isConnected) stringResource(R.string.disconnect_current_connection) else stringResource(R.string.establish_secure_connection),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )

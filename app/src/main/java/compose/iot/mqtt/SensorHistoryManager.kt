@@ -1,22 +1,23 @@
 package compose.iot.mqtt
 
-import android.content.Context
-import compose.iot.AiotApp
 import compose.iot.data.room.SensorHistoryEntity
+import compose.iot.data.room.SensorHistoryDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * 传感器历史数据管理器 (Backed by Room)
  */
-class SensorHistoryManager(private val context: Context) {
+class SensorHistoryManager @Inject constructor(
+    private val dao: SensorHistoryDao,
+) {
     private val maxHistoryCount = 50 // 每个传感器最多存储50条历史记录
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val dao = (context.applicationContext as AiotApp).appDatabase.sensorHistoryDao()
 
     /**
      * 添加传感器数据

@@ -43,10 +43,10 @@ class MqttForegroundService : Service() {
             val channel =
                 NotificationChannel(
                     channelId,
-                    "MQTT后台服务",
+                    getString(R.string.mqtt_service_channel_name),
                     NotificationManager.IMPORTANCE_LOW,
                 ).apply {
-                    description = "保持连接在后台不断开"
+                    description = getString(R.string.mqtt_service_channel_description)
                 }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
@@ -55,8 +55,8 @@ class MqttForegroundService : Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("AIoT 连接保活中")
-            .setContentText("设备连接服务正在后台稳定运行")
+            .setContentTitle(getString(R.string.mqtt_service_notification_title))
+            .setContentText(getString(R.string.mqtt_service_notification_text))
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setOngoing(true)
             .build()

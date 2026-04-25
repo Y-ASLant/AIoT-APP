@@ -9,6 +9,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import compose.iot.R
 
 /**
  * 开关控制卡片内容
@@ -29,7 +31,7 @@ fun SwitchCardContent(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "关闭",
+            text = stringResource(R.string.switch_off),
             style = MaterialTheme.typography.bodyLarge,
             color =
                 if (!isOn) {
@@ -44,7 +46,7 @@ fun SwitchCardContent(
             onCheckedChange = onToggle,
         )
         Text(
-            text = "开启",
+            text = stringResource(R.string.switch_on),
             style = MaterialTheme.typography.bodyLarge,
             color =
                 if (isOn) {

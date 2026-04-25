@@ -7,8 +7,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import compose.iot.R
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import compose.iot.mqtt.*
@@ -44,7 +46,7 @@ fun MqttSubscribeDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = { Text(text = if (editingCard != null) "编辑设备" else "添加设备") },
+        title = { Text(text = stringResource(if (editingCard != null) R.string.dialog_edit_device else R.string.dialog_add_device)) },
         text = {
             Column(
                 modifier =
@@ -56,7 +58,7 @@ fun MqttSubscribeDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // 服务类型选择
-                Text("服务类型", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.service_type), style = MaterialTheme.typography.labelMedium)
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -70,7 +72,7 @@ fun MqttSubscribeDialog(
                             Text(
                                 when (type) {
                                     ServerType.EMQX -> "EMQX"
-                                    ServerType.HomeAssistant -> "HomeAssistant"
+                                    ServerType.HomeAssistant -> stringResource(R.string.home_assistant)
                                 },
                             )
                         }
@@ -78,7 +80,7 @@ fun MqttSubscribeDialog(
                 }
 
                 // 设备类型选择
-                Text("设备类型", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.device_type), style = MaterialTheme.typography.labelMedium)
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -91,8 +93,8 @@ fun MqttSubscribeDialog(
                         ) {
                             Text(
                                 when (type) {
-                                    DeviceType.SENSOR -> "传感器"
-                                    DeviceType.ACTUATOR -> "执行器"
+                                    DeviceType.SENSOR -> stringResource(R.string.device_type_sensor)
+                                    DeviceType.ACTUATOR -> stringResource(R.string.device_type_actuator)
                                 },
                             )
                         }
@@ -102,8 +104,8 @@ fun MqttSubscribeDialog(
                 OutlinedTextField(
                     value = topic,
                     onValueChange = { topic = it },
-                    label = { Text("MQTT主题或HA实体ID") },
-                    placeholder = { Text("例如: device/status") },
+                    label = { Text(stringResource(R.string.topic_or_entity_id)) },
+                    placeholder = { Text(stringResource(R.string.example_device_status)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
@@ -111,8 +113,8 @@ fun MqttSubscribeDialog(
                 OutlinedTextField(
                     value = displayName,
                     onValueChange = { displayName = it },
-                    label = { Text("显示名称") },
-                    placeholder = { Text("例如: 温度") },
+                    label = { Text(stringResource(R.string.display_name)) },
+                    placeholder = { Text(stringResource(R.string.example_temperature)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
@@ -120,8 +122,8 @@ fun MqttSubscribeDialog(
                 OutlinedTextField(
                     value = jsonParam,
                     onValueChange = { jsonParam = it },
-                    label = { Text("MQTT消息JSON字段") },
-                    placeholder = { Text("例如: state") },
+                    label = { Text(stringResource(R.string.mqtt_json_field)) },
+                    placeholder = { Text(stringResource(R.string.example_state)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
@@ -129,15 +131,15 @@ fun MqttSubscribeDialog(
                 OutlinedTextField(
                     value = unitSuffix,
                     onValueChange = { unitSuffix = it },
-                    label = { Text("单位后缀（可选）") },
-                    placeholder = { Text("例如: °C") },
+                    label = { Text(stringResource(R.string.unit_suffix_optional)) },
+                    placeholder = { Text(stringResource(R.string.example_unit_celsius)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
 
                 // 如果是执行器，显示控制类型选择
                 if (deviceType == DeviceType.ACTUATOR) {
-                    Text("控制类型", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.control_type), style = MaterialTheme.typography.labelMedium)
 
                     SingleChoiceSegmentedButtonRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -152,7 +154,7 @@ fun MqttSubscribeDialog(
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 4),
                             colors = transparentSegmentedColors,
                         ) {
-                            Text("开关")
+                            Text(stringResource(R.string.control_switch))
                         }
                         SegmentedButton(
                             selected = isSliderStyle,
@@ -164,7 +166,7 @@ fun MqttSubscribeDialog(
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 4),
                             colors = transparentSegmentedColors,
                         ) {
-                            Text("滑块")
+                            Text(stringResource(R.string.control_slider))
                         }
                         SegmentedButton(
                             selected = isPushButtonStyle,
@@ -176,7 +178,7 @@ fun MqttSubscribeDialog(
                             shape = SegmentedButtonDefaults.itemShape(index = 2, count = 4),
                             colors = transparentSegmentedColors,
                         ) {
-                            Text("按钮")
+                            Text(stringResource(R.string.control_button))
                         }
                         SegmentedButton(
                             selected = !isButtonStyle && !isSliderStyle && !isPushButtonStyle,
@@ -188,7 +190,7 @@ fun MqttSubscribeDialog(
                             shape = SegmentedButtonDefaults.itemShape(index = 3, count = 4),
                             colors = transparentSegmentedColors,
                         ) {
-                            Text("输入")
+                            Text(stringResource(R.string.control_input))
                         }
                     }
 
@@ -197,16 +199,16 @@ fun MqttSubscribeDialog(
                         OutlinedTextField(
                             value = switchOnValue,
                             onValueChange = { switchOnValue = it },
-                            label = { Text("开启时的值") },
-                            placeholder = { Text("例如: 1") },
+                            label = { Text(stringResource(R.string.switch_on_value)) },
+                            placeholder = { Text(stringResource(R.string.example_one)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                         )
                         OutlinedTextField(
                             value = switchOffValue,
                             onValueChange = { switchOffValue = it },
-                            label = { Text("关闭时的值") },
-                            placeholder = { Text("例如: 0") },
+                            label = { Text(stringResource(R.string.switch_off_value)) },
+                            placeholder = { Text(stringResource(R.string.example_zero)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                         )
@@ -221,7 +223,7 @@ fun MqttSubscribeDialog(
                             OutlinedTextField(
                                 value = sliderMin,
                                 onValueChange = { sliderMin = it },
-                                label = { Text("最小值") },
+                                label = { Text(stringResource(R.string.minimum_value)) },
                                 modifier = Modifier.weight(1f),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
@@ -229,7 +231,7 @@ fun MqttSubscribeDialog(
                             OutlinedTextField(
                                 value = sliderMax,
                                 onValueChange = { sliderMax = it },
-                                label = { Text("最大值") },
+                                label = { Text(stringResource(R.string.maximum_value)) },
                                 modifier = Modifier.weight(1f),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
@@ -238,7 +240,7 @@ fun MqttSubscribeDialog(
                         OutlinedTextField(
                             value = sliderStep,
                             onValueChange = { sliderStep = it },
-                            label = { Text("步进值") },
+                            label = { Text(stringResource(R.string.step_value)) },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         )
@@ -249,15 +251,15 @@ fun MqttSubscribeDialog(
                         OutlinedTextField(
                             value = buttonValue,
                             onValueChange = { buttonValue = it },
-                            label = { Text("按钮值") },
-                            placeholder = { Text("按钮点击时发送的值") },
+                            label = { Text(stringResource(R.string.button_value)) },
+                            placeholder = { Text(stringResource(R.string.button_value_hint)) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
 
                 // 卡片样式选择
-                Text("卡片样式", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.card_style), style = MaterialTheme.typography.labelMedium)
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -270,9 +272,9 @@ fun MqttSubscribeDialog(
                         ) {
                             Text(
                                 when (style) {
-                                    CardStyle.HIGHLIGHT -> "高亮"
-                                    CardStyle.MINIMAL -> "简约"
-                                    CardStyle.FILLED -> "填充"
+                                    CardStyle.HIGHLIGHT -> stringResource(R.string.card_style_highlight)
+                                    CardStyle.MINIMAL -> stringResource(R.string.card_style_minimal)
+                                    CardStyle.FILLED -> stringResource(R.string.card_style_filled)
                                 },
                             )
                         }
@@ -297,7 +299,7 @@ fun MqttSubscribeDialog(
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("删除此卡片")
+                        Text(stringResource(R.string.delete_card))
                     }
                 }
             }
@@ -330,12 +332,12 @@ fun MqttSubscribeDialog(
                 },
                 enabled = topic.isNotBlank() && displayName.isNotBlank() && jsonParam.isNotBlank(),
             ) {
-                Text(if (editingCard != null) "更新" else "添加")
+                Text(stringResource(if (editingCard != null) R.string.update else R.string.add))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         },
     )

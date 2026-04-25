@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import compose.iot.ui.app.AppSettingsState
 
 private val lightScheme =
     lightColorScheme(
@@ -98,8 +99,9 @@ private val darkScheme =
 
 @Composable
 fun AIOT_ComposeTheme(
+    appSettings: AppSettingsState,
     darkTheme: Boolean =
-        when (compose.iot.AppState.darkMode.intValue) {
+        when (appSettings.darkMode) {
             1 -> false
             2 -> true
             else -> isSystemInDarkTheme()
@@ -108,7 +110,7 @@ fun AIOT_ComposeTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val themeColorId = compose.iot.AppState.themeColor.intValue
+    val themeColorId = appSettings.themeColor
 
     val colorScheme =
         when {
@@ -161,9 +163,9 @@ fun AIOT_ComposeTheme(
             else -> lightScheme
         }
 
-    // Dynamic Corner Radius Based on AppState
+    // Dynamic corner radius based on app settings
     val radius =
-        when (compose.iot.AppState.cornerShapeLevel.intValue) {
+        when (appSettings.cornerShapeLevel) {
             0 -> 8.dp
             1 -> 12.dp
             2 -> 16.dp

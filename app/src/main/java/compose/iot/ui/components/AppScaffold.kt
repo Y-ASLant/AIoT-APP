@@ -11,6 +11,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -26,6 +29,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import compose.iot.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +40,7 @@ fun AppScaffold(
     showBackButton: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
@@ -57,6 +62,7 @@ fun AppScaffold(
 
     Scaffold(
         modifier = modifier,
+        snackbarHost = snackbarHost,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(title, fontWeight = FontWeight.SemiBold) },
@@ -69,7 +75,7 @@ fun AppScaffold(
                                 navController.navigateUp()
                             },
                         ) {
-                            Icon(TablerIcons.ChevronLeft, contentDescription = "返回")
+                            Icon(TablerIcons.ChevronLeft, contentDescription = stringResource(R.string.back))
                         }
                     }
                 },

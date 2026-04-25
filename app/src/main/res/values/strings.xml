@@ -1,3 +1,326 @@
 <resources>
     <string name="app_name">AIot</string>
+
+    <string name="nav_home">首页</string>
+    <string name="nav_dashboard">面板</string>
+    <string name="nav_settings">设置</string>
+    <string name="nav_about">关于</string>
+
+    <string name="back">返回</string>
+    <string name="enter">进入</string>
+
+    <string name="device_center">设备中心</string>
+    <string name="add_device">添加设备</string>
+    <string name="device_type_sensor">传感器</string>
+    <string name="device_type_actuator">执行器</string>
+    <string name="empty_device_content_description">暂无%1$s设备</string>
+    <string name="empty_device_title">暂无%1$s设备</string>
+    <string name="empty_device_subtitle">点击右下角 + 添加新的%1$s设备</string>
+    <string name="server_type_emqx">EMQX</string>
+    <string name="server_type_ha">HA</string>
+
+    <string name="dialog_add_device">添加设备</string>
+    <string name="dialog_edit_device">编辑设备</string>
+    <string name="service_type">服务类型</string>
+    <string name="device_type">设备类型</string>
+    <string name="topic_or_entity_id">MQTT主题或HA实体ID</string>
+    <string name="example_device_status">例如: device/status</string>
+    <string name="display_name">显示名称</string>
+    <string name="example_temperature">例如: 温度</string>
+    <string name="mqtt_json_field">MQTT消息JSON字段</string>
+    <string name="example_state">例如: state</string>
+    <string name="unit_suffix_optional">单位后缀（可选）</string>
+    <string name="example_unit_celsius">例如: °C</string>
+    <string name="control_type">控制类型</string>
+    <string name="control_switch">开关</string>
+    <string name="control_slider">滑块</string>
+    <string name="control_button">按钮</string>
+    <string name="control_input">输入</string>
+    <string name="switch_on_value">开启时的值</string>
+    <string name="switch_off_value">关闭时的值</string>
+    <string name="example_one">例如: 1</string>
+    <string name="example_zero">例如: 0</string>
+    <string name="minimum_value">最小值</string>
+    <string name="maximum_value">最大值</string>
+    <string name="step_value">步进值</string>
+    <string name="button_value">按钮值</string>
+    <string name="button_value_hint">按钮点击时发送的值</string>
+    <string name="card_style">卡片样式</string>
+    <string name="card_style_highlight">高亮</string>
+    <string name="card_style_minimal">简约</string>
+    <string name="card_style_filled">填充</string>
+    <string name="delete_card">删除此卡片</string>
+    <string name="update">更新</string>
+    <string name="add">添加</string>
+    <string name="cancel">取消</string>
+
+    <string name="input_placeholder">请输入要发送的内容</string>
+    <string name="send">发送</string>
+    <string name="execute">执行</string>
+    <string name="sensor_waiting">等待数据...</string>
+    <string name="sensor_unknown">状态未知</string>
+    <string name="slider_realtime_control">实时控制</string>
+    <string name="switch_off">关闭</string>
+    <string name="switch_on">开启</string>
+
+    <string name="history_title">%1$s 历史数据</string>
+    <string name="average_value">平均值</string>
+    <string name="minimum_label">最小值</string>
+    <string name="maximum_label">最大值</string>
+    <string name="no_history_data">暂无历史数据</string>
+    <string name="time_label">时间</string>
+    <string name="value_label">数值</string>
+    <string name="clear_history">清除历史</string>
+    <string name="clear_history_records">清除历史记录</string>
+
+    <string name="connection_dashboard">连接面板</string>
+    <string name="mqtt_service">MQTT 服务</string>
+    <string name="mqtt_service_description">配置 EMQX Broker 连接参数</string>
+    <string name="home_assistant">Home Assistant</string>
+    <string name="home_assistant_description">接入 HA 智能家居平台</string>
+    <string name="video_stream_service">视频流服务</string>
+    <string name="video_stream_service_description">WebSocket 实时画面监控</string>
+    <string name="bluetooth_devices">蓝牙设备</string>
+    <string name="bluetooth_devices_description">扫描并连接 BLE 外设</string>
+
+    <string name="mqtt_connection_settings">MQTT 连接设置</string>
+    <string name="server_connected">已连接到服务器</string>
+    <string name="server_not_connected">服务器未连接</string>
+    <string name="check_network_or_config">请检查网络或配置信息</string>
+    <string name="network_credentials">网络凭证</string>
+    <string name="server_address">服务器地址</string>
+    <string name="port">端口</string>
+    <string name="client_id">Client ID</string>
+    <string name="mqtt_version_311">v3.1.1</string>
+    <string name="mqtt_version_50">v5.0</string>
+    <string name="authentication">身份验证</string>
+    <string name="username">用户名</string>
+    <string name="password">密码</string>
+    <string name="background_auto_connect">后台自动连接</string>
+    <string name="background_auto_connect_description">应用启动时自动接入云端</string>
+    <string name="disconnect_current_connection">断开当前连接</string>
+    <string name="establish_secure_connection">建立安全连接</string>
+    <string name="server_connection_success">服务器连接成功</string>
+    <string name="mqtt_disconnected">MQTT服务器已断开</string>
+
+    <string name="settings_title">首选项</string>
+    <string name="settings_section_ui">界面</string>
+    <string name="app_theme">应用主题</string>
+    <string name="app_theme_description">动态取色与深浅色模式配置</string>
+    <string name="system_corner_style">系统圆角风格</string>
+    <string name="system_corner_style_description">调整全局组件的圆角程度</string>
+    <string name="corner_small">小圆角</string>
+    <string name="corner_default">默认</string>
+    <string name="corner_large">大圆角</string>
+    <string name="predictive_back_animation">预测性返回动画</string>
+    <string name="predictive_back_animation_description">在 Android 14+ 启用高级侧滑返回动效</string>
+    <string name="settings_section_background">后台服务</string>
+    <string name="notification_keep_alive">通知栏保活</string>
+    <string name="notification_keep_alive_description">开启通知栏常驻，保证软件在后台连接稳定</string>
+
+    <string name="palette">配色</string>
+    <string name="dark_mode">深色模式</string>
+    <string name="theme_mode_auto">跟随系统</string>
+    <string name="theme_mode_light">浅色</string>
+    <string name="theme_mode_dark">深色</string>
+
+    <string name="about_title">关于</string>
+    <string name="app_subtitle">物联网数据监控平台</string>
+    <string name="author_name">作者：ASLant</string>
+    <string name="github">GitHub</string>
+    <string name="about_this_tool">关于此工具</string>
+    <string name="about_features">✨ Jetpack Compose + Kotlin\n💫 Material Design 3\n🍀 MQTT &amp; Home Assistant\n🔍 实时数据监控与可视化\n🗼 丰富的 Card 自定义选项\n🛠️ 手动添加传感 / 执行器设备</string>
+    <string name="changelog">更新日志</string>
+    <string name="view_changelog">查看更新日志</string>
+    <string name="app_version">AIOT 版本 %1$s</string>
+    <string name="update_date_line">更新日期: %1$s · © %2$d ASLant</string>
+    <string name="network_unavailable_check_settings">网络连接不可用，请检查网络设置</string>
+    <string name="already_latest_version">已是最新版本</string>
+    <string name="unknown_error">未知错误</string>
+    <string name="check_update_failed">检查更新失败: %1$s</string>
+    <string name="checking_updates">正在检查…</string>
+    <string name="check_updates">检查更新</string>
+    <string name="new_version_found">发现新版本</string>
+    <string name="current_version">当前版本</string>
+    <string name="latest_version">最新版本</string>
+    <string name="apk_size">安装包大小: %1$s</string>
+    <string name="unknown_size">未知</string>
+    <string name="update_content">更新内容</string>
+    <string name="update_now">立即更新</string>
+    <string name="maybe_later">稍后再说</string>
+
+    <string name="changelog_latest">最新</string>
+
+    <string name="ha_server_section">服务器</string>
+    <string name="refresh">刷新</string>
+    <string name="server_url">服务器地址</string>
+    <string name="home_assistant_server_url_placeholder">http://homeassistant.local:8123</string>
+    <string name="access_token">访问令牌</string>
+    <string name="polling_interval_seconds">轮询间隔（秒）</string>
+    <string name="default_number_five">5</string>
+    <string name="connect">连接</string>
+    <string name="search_devices">搜索设备...</string>
+    <string name="search">搜索</string>
+    <string name="clear">清空</string>
+    <string name="entity_id_line">ID: %1$s</string>
+    <string name="entity_state_line">状态: %1$s</string>
+    <string name="entity_class_line">类型: %1$s</string>
+
+    <string name="ha_fill_all_fields">请填写所有字段</string>
+    <string name="ha_polling_interval_invalid">轮询间隔必须大于 0</string>
+    <string name="ha_connected_successfully">连接成功</string>
+    <string name="ha_failed_to_connect">连接失败</string>
+    <string name="ha_not_configured">尚未配置 Home Assistant</string>
+    <string name="ha_failed_to_refresh">刷新设备失败</string>
+    <string name="ha_added_device">已添加设备：%1$s</string>
+    <string name="ha_failed_to_add_device">添加设备失败</string>
+
+    <string name="video_stream_title">视频流</string>
+    <string name="network">网络</string>
+    <string name="websocket_security">WebSocket 安全</string>
+    <string name="use_wss">使用 WSS</string>
+    <string name="use_ws">使用 WS</string>
+    <string name="server">服务器</string>
+    <string name="path">路径</string>
+    <string name="credentials">凭证</string>
+    <string name="websocket_url">WebSocket 地址</string>
+    <string name="connection_successful">连接成功</string>
+    <string name="connection_failed">连接失败</string>
+    <string name="test">测试</string>
+    <string name="start">开始</string>
+    <string name="save">保存</string>
+    <string name="video_stream_content_description">视频流画面</string>
+    <string name="frames_count">帧数: %1$d</string>
+    <string name="waiting_for_frames">等待画面中...</string>
+    <string name="messages_count">消息数: %1$d</string>
+    <string name="last_message">最近消息: %1$s</string>
+    <string name="error_message">错误: %1$s</string>
+    <string name="close_stream">关闭视频流</string>
+    <string name="video_stream_required_server_port">服务器地址和端口不能为空</string>
+
+    <string name="bluetooth_status">蓝牙状态</string>
+    <string name="enabled">已开启</string>
+    <string name="disabled">未开启</string>
+    <string name="bluetooth_permission_missing">缺少蓝牙权限，点击下方按钮重新申请</string>
+    <string name="bluetooth_permission_required">需要蓝牙权限才能扫描设备</string>
+    <string name="enable_bluetooth_first">请先在系统设置中开启蓝牙</string>
+    <string name="enable_location_for_ble">请开启系统定位服务(GPS)以发现蓝牙设备</string>
+    <string name="scanning">正在扫描…</string>
+    <string name="grant_bluetooth_permission">授予蓝牙权限</string>
+    <string name="scan_ble_devices">扫描 BLE 设备</string>
+    <string name="scan_for_nearby_devices">点击扫描发现附近蓝牙设备</string>
+    <string name="unknown_device">未知设备</string>
+
+    <string name="mqtt_service_channel_name">MQTT后台服务</string>
+    <string name="mqtt_service_channel_description">保持连接在后台不断开</string>
+    <string name="mqtt_service_notification_title">AIoT 连接保活中</string>
+    <string name="mqtt_service_notification_text">设备连接服务正在后台稳定运行</string>
+
+    <string name="snackbar_history_cleared">历史记录已清除</string>
+    <string name="snackbar_send_success">发送成功</string>
+    <string name="snackbar_send_failed">发送失败: %1$s</string>
+    <string name="snackbar_param_already_monitored">该参数已经被监控</string>
+    <string name="snackbar_card_updated">已更新监控参数</string>
+    <string name="snackbar_card_added">已添加监控参数</string>
+    <string name="snackbar_card_deleted">已删除监控卡片</string>
+
+    <string name="temperature_unit_celsius">°C</string>
+
+    <string-array name="changelog_1_2_1">
+        <item>增加检查更新功能</item>
+        <item>修复滑实时控制EMQX无效问题</item>
+        <item>About界面信息显示优化</item>
+        <item>其它Bug修复</item>
+    </string-array>
+    <string-array name="changelog_1_2_0">
+        <item>删除蓝牙功能及界面</item>
+        <item>增加视频流配置界面及功能</item>
+        <item>WebSocket画面显示</item>
+        <item>修复EMQX执行器开关问题</item>
+        <item>增加滑块操作方式实时控制切换</item>
+    </string-array>
+    <string-array name="changelog_1_1_9">
+        <item>HA 添加设备操作优化</item>
+        <item>根据实体ID的前缀自动识别设备类型</item>
+        <item>HA number 类型设备支持</item>
+        <item>HA switch 类型设备支持</item>
+        <item>HA light 类型设备支持</item>
+        <item>HA button 类型设备支持</item>
+        <item>修复HA设备添加时软件崩溃问题</item>
+    </string-array>
+    <string-array name="changelog_1_1_8">
+        <item>增加BLE按钮与二级界面</item>
+        <item>增加蓝牙权限获取</item>
+        <item>滑块监听,实现自动更新</item>
+        <item>HA添加设备界面增加搜索栏</item>
+        <item>修复EMQX执行器无法记录具体状态问题</item>
+        <item>蓝牙扫描、通信功能暂未实现</item>
+    </string-array>
+    <string-array name="changelog_1_1_7">
+        <item>优化横屏模式下的界面显示</item>
+        <item>修复 Home Assistant 设备状态显示异常的问题</item>
+        <item>改进 HA 设备状态获取机制，提升显示速度</item>
+        <item>优化错误处理和日志记录，提高系统稳定性</item>
+    </string-array>
+    <string-array name="changelog_1_1_6">
+        <item>增加 Password-Based 客户端认证</item>
+        <item>增加首页瀑布流布局</item>
+        <item>修复其他已知问题</item>
+    </string-array>
+    <string-array name="changelog_1_1_5">
+        <item>新增更新日志界面</item>
+        <item>重写SplashScreen启动界面，使用系统API</item>
+        <item>修复其他已知问题</item>
+    </string-array>
+    <string-array name="changelog_1_1_3">
+        <item>新增传感器历史数据功能</item>
+        <item>优化底部弹出菜单交互</item>
+        <item>修复其他已知问题</item>
+    </string-array>
+    <string-array name="changelog_1_1_0">
+        <item>新增 Home Assistant 集成</item>
+        <item>支持自动发现已有设备</item>
+        <item>优化UI交互体验</item>
+    </string-array>
+    <string-array name="changelog_1_0_0">
+        <item>继续完善已有功能</item>
+        <item>修复已知Bug，统一UI样式，优化打包APK体积</item>
+        <item>发布release版，APK体积大幅减小(下降90%)</item>
+    </string-array>
+    <string-array name="changelog_0_9_0">
+        <item>完善已有功能</item>
+        <item>修复已知Bug，升级引用包编译版本</item>
+        <item>APK打包体积优化，启用R8编译模式</item>
+        <item>简单实现APK更新功能(能用但不好用)</item>
+    </string-array>
+    <string-array name="changelog_0_8_1">
+        <item>新增 EMQX 集成</item>
+        <item>支持 MQTT-3.1.1 协议</item>
+        <item>支持实时数据监控</item>
+    </string-array>
+    <string-array name="changelog_0_5_0">
+        <item>增加 Paho-mqtt 包</item>
+        <item>支持 MQTT 协议简单通信</item>
+        <item>增加多界面</item>
+        <item>增加底部导航栏</item>
+        <item>增加导航栏按钮状态切换</item>
+    </string-array>
+    <string-array name="changelog_0_4_4">
+        <item>增加 Paho-mqtt 包</item>
+        <item>支持 MQTT 协议简单通信</item>
+        <item>增加多界面</item>
+        <item>增加底部导航栏</item>
+        <item>增加导航栏按钮状态切换</item>
+    </string-array>
+    <string-array name="changelog_0_0_5">
+        <item>Toast 与按钮联动</item>
+        <item>手动获取权限问题</item>
+        <item>使用 Edge To Edge 状态栏沉浸</item>
+        <item>使用 Material Design 3动态主题</item>
+    </string-array>
+    <string-array name="changelog_0_0_2">
+        <item>首次发布</item>
+        <item>使用 Compose 创建基础项目</item>
+        <item>尝试增加 Material Design 3 组件</item>
+    </string-array>
 </resources>

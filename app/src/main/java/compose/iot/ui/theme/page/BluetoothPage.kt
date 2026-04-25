@@ -23,11 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import compose.iot.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -84,7 +86,7 @@ fun BluetoothPage(navController: NavController) {
         ) { permissions ->
             hasPermission = permissions.values.all { it }
             if (!hasPermission) {
-                Toast.makeText(context, "需要蓝牙权限才能扫描设备", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.bluetooth_permission_required), Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -146,7 +148,7 @@ fun BluetoothPage(navController: NavController) {
 
     compose.iot.ui.components.AppScaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        title = "蓝牙设备",
+        title = stringResource(R.string.bluetooth_devices),
         navController = navController,
         scrollBehavior = scrollBehavior,
     ) { _ ->
@@ -188,7 +190,7 @@ fun BluetoothPage(navController: NavController) {
                                 modifier = Modifier.size(20.dp),
                             )
                             Text(
-                                text = "蓝牙状态",
+                                text = stringResource(R.string.bluetooth_status),
                                 style = MaterialTheme.typography.titleSmall,
                             )
                         }
@@ -208,7 +210,7 @@ fun BluetoothPage(navController: NavController) {
                         ) {
                             Text(
                                 text =
-                                    if (bluetoothAdapter?.isEnabled == true) "已开启" else "未开启",
+                                    if (bluetoothAdapter?.isEnabled == true) stringResource(R.string.enabled) else stringResource(R.string.disabled),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
                             )
@@ -217,7 +219,7 @@ fun BluetoothPage(navController: NavController) {
 
                     if (!hasPermission) {
                         Text(
-                            text = "缺少蓝牙权限，点击下方按钮重新申请",
+                            text = stringResource(R.string.bluetooth_permission_missing),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -230,7 +232,7 @@ fun BluetoothPage(navController: NavController) {
                                 return@FilledTonalButton
                             }
                             if (bluetoothAdapter?.isEnabled != true) {
-                                Toast.makeText(context, "请先在系统设置中开启蓝牙", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.enable_bluetooth_first), Toast.LENGTH_SHORT).show()
                                 return@FilledTonalButton
                             }
                             if (isScanning) {
@@ -248,7 +250,7 @@ fun BluetoothPage(navController: NavController) {
                                     }
 
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && !isLocationEnabled) {
-                                    Toast.makeText(context, "请开启系统定位服务(GPS)以发现蓝牙设备", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.enable_location_for_ble), Toast.LENGTH_SHORT).show()
                                     return@FilledTonalButton
                                 }
 
@@ -270,7 +272,7 @@ fun BluetoothPage(navController: NavController) {
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("正在扫描…")
+                            Text(stringResource(R.string.scanning))
                         } else if (!hasPermission) {
                             Icon(
                                 imageVector = TablerIcons.Bluetooth,
@@ -278,7 +280,7 @@ fun BluetoothPage(navController: NavController) {
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("授予蓝牙权限")
+                            Text(stringResource(R.string.grant_bluetooth_permission))
                         } else {
                             Icon(
                                 imageVector = TablerIcons.Bluetooth,
@@ -286,7 +288,7 @@ fun BluetoothPage(navController: NavController) {
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("扫描 BLE 设备")
+                            Text(stringResource(R.string.scan_ble_devices))
                         }
                     }
                 }
@@ -312,7 +314,7 @@ fun BluetoothPage(navController: NavController) {
                             tint = MaterialTheme.colorScheme.outlineVariant,
                         )
                         Text(
-                            text = "点击扫描发现附近蓝牙设备",
+                            text = stringResource(R.string.scan_for_nearby_devices),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.outline,
                         )
@@ -352,7 +354,7 @@ private fun DeviceItem(device: BluetoothDevice) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         ListItem(
-            headlineContent = { Text(deviceName ?: "未知设备", style = MaterialTheme.typography.bodyLarge) },
+            headlineContent = { Text(deviceName ?: stringResource(R.string.unknown_device), style = MaterialTheme.typography.bodyLarge) },
             supportingContent = { Text(device.address, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
             leadingContent = {
                 FilledTonalIconButton(

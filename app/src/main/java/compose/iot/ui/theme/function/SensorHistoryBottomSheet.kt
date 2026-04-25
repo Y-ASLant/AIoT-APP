@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import compose.iot.R
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import compose.iot.mqtt.SensorHistoryData
@@ -44,7 +46,7 @@ fun SensorHistoryBottomSheet(
 
                 // 标题
                 Text(
-                    text = "$sensorName 历史数据",
+                    text = stringResource(R.string.history_title, sensorName),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
@@ -86,7 +88,7 @@ fun SensorHistoryBottomSheet(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                text = "平均值",
+                                text = stringResource(R.string.average_value),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -102,7 +104,7 @@ fun SensorHistoryBottomSheet(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                text = "最小值",
+                                text = stringResource(R.string.minimum_label),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -118,7 +120,7 @@ fun SensorHistoryBottomSheet(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                text = "最大值",
+                                text = stringResource(R.string.maximum_label),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -145,7 +147,7 @@ fun SensorHistoryBottomSheet(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
-                        text = "暂无历史数据",
+                        text = stringResource(R.string.no_history_data),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.outline,
                     )
@@ -164,13 +166,13 @@ fun SensorHistoryBottomSheet(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            text = "时间",
+                            text = stringResource(R.string.time_label),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Start,
                         )
                         Text(
-                            text = "数值",
+                            text = stringResource(R.string.value_label),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.End,
@@ -232,11 +234,11 @@ fun SensorHistoryBottomSheet(
                         ) {
                             Icon(
                                 imageVector = TablerIcons.X,
-                                contentDescription = "清除历史",
+                                contentDescription = stringResource(R.string.clear_history),
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("清除历史记录")
+                            Text(stringResource(R.string.clear_history_records))
                         }
                     }
                 }

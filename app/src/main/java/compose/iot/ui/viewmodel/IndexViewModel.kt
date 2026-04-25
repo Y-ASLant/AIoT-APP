@@ -1,18 +1,22 @@
 
 package compose.iot.ui.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import compose.iot.AiotApp
+import compose.iot.R
 import compose.iot.data.preferences.PreferencesManager
+import compose.iot.data.room.SubscriptionCardDao
 import compose.iot.mqtt.DeviceType
 import compose.iot.mqtt.HomeAssistantManager
+import compose.iot.mqtt.MqttManager
 import compose.iot.mqtt.SensorHistoryManager
 import compose.iot.mqtt.ServerType
 import compose.iot.mqtt.SubscriptionCard
 import compose.iot.ui.theme.page.DeviceSubscriptionController
 import compose.iot.ui.theme.page.SubscriptionCardStorage
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * IndexPage 的 ViewModel
@@ -32,14 +37,15 @@ import timber.log.Timber
  * - 路由设备指令到 MQTT 或 HomeAssistant
  * - 管理订阅生命周期
  */
-class IndexViewModel(application: Application) : AndroidViewModel(application) {
-    private val context = application.applicationContext
-    private val app = application as AiotApp
-    private val mqttManager = app.mqttManager
-    private val prefsManager: PreferencesManager = app.preferencesManager
-
-    private val haManager = HomeAssistantManager(context)
-    private val historyManager = SensorHistoryManager(context)
+@HiltViewModel
+class IndexViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val mqttManager: MqttManager,
+    private val prefsManager: PreferencesManager,
+    private val haManager: HomeAssistantManager,
+    private val historyManager: SensorHistoryManager,
+    private val subscriptionCardDao: SubscriptionCardDao,
+) : ViewModel() {
 
     // region ── State ──
 
@@ -86,7 +92,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         viewModelScope.launch {
-            app.appDatabase.subscriptionCardDao().getAllCardsStream().collectLatest(::syncCards)
+            subscriptionCardDao.getAllCardsStream().collectLatest(::syncCards)
         }
     }
 
@@ -174,7 +180,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
         val card = _uiState.value.selectedSensorCard ?: return
         historyManager.clearHistory(buildCardId(card))
         _uiState.update { it.copy(sensorHistoryData = emptyList()) }
-        emitSnackbar("历史记录已清除")
+        emitSnackbar(context.getString(R.string.snackbar_history_cleared))
     }
 
     // endregion
@@ -202,11 +208,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                             )
                         }
                         prefsManager.saveSwitchState(cid, newState)
-                        emitSnackbar("发送成功")
+                        emitSnackbar(context.getString(R.string.snackbar_send_success))
                     },
                     onError = { error ->
                         _uiState.update { it.copy(loadingCards = it.loadingCards - cid) }
-                        emitSnackbar("发送失败: $error")
+                        emitSnackbar(context.getString(R.string.snackbar_send_failed, error))
                     },
                 )
             }
@@ -225,16 +231,16 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                         },
                     onComplete = {
                         prefsManager.saveSwitchState(cid, newState)
-                        emitSnackbar("发送成功")
+                        emitSnackbar(context.getString(R.string.snackbar_send_success))
                     },
                     onError = { error ->
                         val revert =
                             when (card.serverType) {
                                 ServerType.EMQX -> if (newState) card.switchOffValue else card.switchOnValue
                                 ServerType.HomeAssistant -> if (newState) "off" else "on"
-                            }
+                        }
                         _uiState.update { it.copy(cardValues = it.cardValues + (cid to revert)) }
-                        emitSnackbar("发送失败: $error")
+                        emitSnackbar(context.getString(R.string.snackbar_send_failed, error))
                     },
                 )
             }
@@ -258,9 +264,9 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                     message = json.toString(),
                     onComplete = {
                         prefsManager.saveSliderState(cid, value)
-                        emitThrottledSnackbar("发送成功")
+                        emitThrottledSnackbar(context.getString(R.string.snackbar_send_success))
                     },
-                    onError = { error -> emitThrottledSnackbar("发送失败: $error") },
+                    onError = { error -> emitThrottledSnackbar(context.getString(R.string.snackbar_send_failed, error)) },
                 )
             }
             ServerType.HomeAssistant -> {
@@ -272,9 +278,9 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                     data = buildSliderData(entityId, value),
                     onComplete = {
                         prefsManager.saveSliderState(cid, value)
-                        emitThrottledSnackbar("发送成功")
+                        emitThrottledSnackbar(context.getString(R.string.snackbar_send_success))
                     },
-                    onError = { error -> emitThrottledSnackbar("发送失败: $error") },
+                    onError = { error -> emitThrottledSnackbar(context.getString(R.string.snackbar_send_failed, error)) },
                 )
             }
         }
@@ -302,11 +308,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                     message = json.toString(),
                     onComplete = {
                         onComplete()
-                        emitSnackbar("发送成功")
+                        emitSnackbar(context.getString(R.string.snackbar_send_success))
                     },
                     onError = { error ->
                         onError(error)
-                        emitSnackbar("发送失败: $error")
+                        emitSnackbar(context.getString(R.string.snackbar_send_failed, error))
                     },
                 )
             }
@@ -319,11 +325,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                     data = JSONObject(),
                     onComplete = {
                         onComplete()
-                        emitSnackbar("发送成功")
+                        emitSnackbar(context.getString(R.string.snackbar_send_success))
                     },
                     onError = { error ->
                         onError(error)
-                        emitSnackbar("发送失败: $error")
+                        emitSnackbar(context.getString(R.string.snackbar_send_failed, error))
                     },
                 )
             }
@@ -348,11 +354,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                     message = json.toString(),
                     onComplete = {
                         onComplete()
-                        emitSnackbar("发送成功")
+                        emitSnackbar(context.getString(R.string.snackbar_send_success))
                     },
                     onError = { error ->
                         onError(error)
-                        emitSnackbar("发送失败: $error")
+                        emitSnackbar(context.getString(R.string.snackbar_send_failed, error))
                     },
                 )
             }
@@ -365,11 +371,11 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                     data = JSONObject().apply { put("value", text) },
                     onComplete = {
                         onComplete()
-                        emitSnackbar("发送成功")
+                        emitSnackbar(context.getString(R.string.snackbar_send_success))
                     },
                     onError = { error ->
                         onError(error)
-                        emitSnackbar("发送失败: $error")
+                        emitSnackbar(context.getString(R.string.snackbar_send_failed, error))
                     },
                 )
             }
@@ -396,15 +402,15 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
             card.deviceType == DeviceType.SENSOR &&
             cards.any { it.topic == card.topic && it.jsonParam == card.jsonParam && it.deviceType == DeviceType.SENSOR }
         ) {
-            emitSnackbar("该参数已经被监控")
+            emitSnackbar(context.getString(R.string.snackbar_param_already_monitored))
             return
         }
 
         viewModelScope.launch {
             if (previousCard != null) {
-                app.appDatabase.subscriptionCardDao().deleteCardById(previousCard.topic, previousCard.jsonParam)
+                subscriptionCardDao.deleteCardById(previousCard.topic, previousCard.jsonParam)
             }
-            app.appDatabase.subscriptionCardDao().insertCards(listOf(card))
+            subscriptionCardDao.insertCards(listOf(card))
         }
 
         _uiState.update {
@@ -413,12 +419,20 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                 editingCard = null,
             )
         }
-        emitSnackbar(if (previousCard != null) "已更新监控参数" else "已添加监控参数")
+        emitSnackbar(
+            context.getString(
+                if (previousCard != null) {
+                    R.string.snackbar_card_updated
+                } else {
+                    R.string.snackbar_card_added
+                },
+            ),
+        )
     }
 
     fun deleteCard(card: SubscriptionCard) {
         viewModelScope.launch {
-            app.appDatabase.subscriptionCardDao().deleteCard(card)
+            subscriptionCardDao.deleteCard(card)
         }
 
         _uiState.update {
@@ -427,7 +441,7 @@ class IndexViewModel(application: Application) : AndroidViewModel(application) {
                 editingCard = null,
             )
         }
-        emitSnackbar("已删除监控卡片")
+        emitSnackbar(context.getString(R.string.snackbar_card_deleted))
     }
 
     // endregion

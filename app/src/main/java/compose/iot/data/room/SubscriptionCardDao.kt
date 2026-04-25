@@ -16,6 +16,12 @@ interface SubscriptionCardDao {
     @Query("SELECT * FROM subscription_cards")
     suspend fun getAllCards(): List<SubscriptionCard>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM subscription_cards WHERE topic = :topic AND jsonParam = :jsonParam)")
+    suspend fun exists(
+        topic: String,
+        jsonParam: String,
+    ): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCards(cards: List<SubscriptionCard>)
 

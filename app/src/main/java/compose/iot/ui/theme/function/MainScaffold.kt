@@ -16,141 +16,96 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
-import compose.iot.AppState
+import compose.icons.tablericons.Dashboard
+import compose.icons.tablericons.Home
+import compose.icons.tablericons.InfoCircle
+import compose.icons.tablericons.Settings
+import compose.iot.R
+import compose.iot.ui.app.AppTab
+import compose.iot.ui.app.LocalAppSettingsViewModel
 import compose.iot.ui.theme.page.AboutPage
 import compose.iot.ui.theme.page.DashPage
 import compose.iot.ui.theme.page.IndexPage
 import compose.iot.ui.theme.page.SettingsPage
-import kotlinx.coroutines.CoroutineScope
 
-/**
- * 应用主框架 — 采用 M3 Scaffold + NavigationBar
- *
- * 页面切换动画使用 M3 推荐的 Fade Through（淡入 + 微缩放）模式
- */
 @Composable
-fun MainScaffold(
-    scope: CoroutineScope,
-    navController: NavController,
-) {
+fun MainScaffold(navController: NavController) {
+    val settingsViewModel = LocalAppSettingsViewModel.current
+    val appSettings by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val topCornerRadius =
+        when (appSettings.cornerShapeLevel) {
+            0 -> 8.dp
+            1 -> 12.dp
+            2 -> 16.dp
+            else -> 8.dp
+        }
+
     Scaffold(
         bottomBar = {
-            if (AppState.selectedTab.intValue in 0..3) {
-                NavigationBar(
-                    modifier =
-                        Modifier
-                            .clip(
-                                androidx.compose.foundation.shape.RoundedCornerShape(
-                                    topStart =
-                                        compose.iot.AppState.cornerShapeLevel.intValue.let {
-                                            when (it) {
-                                                0 -> 8.dp
-                                                1 -> 12.dp
-                                                2 -> 16.dp
-                                                else -> 8.dp
-                                            }
-                                        },
-                                    topEnd =
-                                        compose.iot.AppState.cornerShapeLevel.intValue.let {
-                                            when (it) {
-                                                0 -> 8.dp
-                                                1 -> 12.dp
-                                                2 -> 16.dp
-                                                else -> 8.dp
-                                            }
-                                        },
-                                ),
-                            ),
-                ) {
-                    NavigationBarItem(
-                        selected = AppState.selectedTab.intValue == 0,
-                        onClick = {
-                            AppState.selectedTab.intValue = 0
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = TablerIcons.Home,
-                                contentDescription = "首页",
-                                modifier = Modifier.size(24.dp),
-                            )
-                        },
-                        label = {
-                            Text(
-                                "首页",
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        },
-                    )
-                    NavigationBarItem(
-                        selected = AppState.selectedTab.intValue == 1,
-                        onClick = {
-                            AppState.selectedTab.intValue = 1
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = TablerIcons.Dashboard,
-                                contentDescription = "面板",
-                                modifier = Modifier.size(24.dp),
-                            )
-                        },
-                        label = {
-                            Text(
-                                "面板",
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        },
-                    )
-                    NavigationBarItem(
-                        selected = AppState.selectedTab.intValue == 2,
-                        onClick = {
-                            AppState.selectedTab.intValue = 2
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = TablerIcons.Settings,
-                                contentDescription = "设置",
-                                modifier = Modifier.size(24.dp),
-                            )
-                        },
-                        label = {
-                            Text(
-                                "设置",
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        },
-                    )
-                    NavigationBarItem(
-                        selected = AppState.selectedTab.intValue == 3,
-                        onClick = {
-                            AppState.selectedTab.intValue = 3
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = TablerIcons.InfoCircle,
-                                contentDescription = "关于",
-                                modifier = Modifier.size(24.dp),
-                            )
-                        },
-                        label = {
-                            Text(
-                                "关于",
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        },
-                    )
-                }
+            NavigationBar(
+                modifier = Modifier.clip(RoundedCornerShape(topStart = topCornerRadius, topEnd = topCornerRadius)),
+            ) {
+                NavigationBarItem(
+                    selected = appSettings.selectedTab == AppTab.INDEX,
+                    onClick = { settingsViewModel.selectTab(AppTab.INDEX) },
+                    icon = {
+                        Icon(
+                            imageVector = TablerIcons.Home,
+                            contentDescription = stringResource(R.string.nav_home),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_home), style = MaterialTheme.typography.labelMedium) },
+                )
+                NavigationBarItem(
+                    selected = appSettings.selectedTab == AppTab.DASH,
+                    onClick = { settingsViewModel.selectTab(AppTab.DASH) },
+                    icon = {
+                        Icon(
+                            imageVector = TablerIcons.Dashboard,
+                            contentDescription = stringResource(R.string.nav_dashboard),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.labelMedium) },
+                )
+                NavigationBarItem(
+                    selected = appSettings.selectedTab == AppTab.SETTINGS,
+                    onClick = { settingsViewModel.selectTab(AppTab.SETTINGS) },
+                    icon = {
+                        Icon(
+                            imageVector = TablerIcons.Settings,
+                            contentDescription = stringResource(R.string.nav_settings),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_settings), style = MaterialTheme.typography.labelMedium) },
+                )
+                NavigationBarItem(
+                    selected = appSettings.selectedTab == AppTab.ABOUT,
+                    onClick = { settingsViewModel.selectTab(AppTab.ABOUT) },
+                    icon = {
+                        Icon(
+                            imageVector = TablerIcons.InfoCircle,
+                            contentDescription = stringResource(R.string.nav_about),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_about), style = MaterialTheme.typography.labelMedium) },
+                )
             }
         },
     ) { innerPadding ->
-        // M3 Fade Through 动画: fadeOut → scaleIn + fadeIn
         AnimatedContent(
-            targetState = AppState.selectedTab.intValue,
+            targetState = appSettings.selectedTab,
             modifier =
                 Modifier
                     .fillMaxSize()
@@ -162,11 +117,10 @@ fun MainScaffold(
             label = "page_switch",
         ) { targetTab ->
             when (targetTab) {
-                0 -> IndexPage()
-                1 -> DashPage(navController)
-                2 -> SettingsPage(navController)
-                3 -> AboutPage(navController)
-                else -> {}
+                AppTab.INDEX -> IndexPage()
+                AppTab.DASH -> DashPage(navController)
+                AppTab.SETTINGS -> SettingsPage(navController)
+                AppTab.ABOUT -> AboutPage(navController)
             }
         }
     }

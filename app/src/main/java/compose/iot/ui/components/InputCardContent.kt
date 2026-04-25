@@ -18,7 +18,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import compose.iot.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -44,7 +46,7 @@ fun InputCardContent(
         OutlinedTextField(
             value = inputValue,
             onValueChange = { inputValue = it },
-            placeholder = { Text("请输入要发送的内容") },
+            placeholder = { Text(stringResource(R.string.input_placeholder)) },
             modifier =
                 Modifier
                     .weight(1f)
@@ -84,7 +86,7 @@ fun InputCardContent(
                     strokeWidth = 2.dp,
                 )
             } else {
-                Text("发送")
+                Text(stringResource(R.string.send))
             }
         }
     }

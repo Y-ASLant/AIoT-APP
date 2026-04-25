@@ -1,6 +1,5 @@
 package compose.iot.ui.viewmodel
 
-import androidx.compose.runtime.Immutable
 import compose.iot.mqtt.DeviceType
 import compose.iot.mqtt.SensorHistoryData
 import compose.iot.mqtt.SubscriptionCard
@@ -8,7 +7,6 @@ import compose.iot.mqtt.SubscriptionCard
 /**
  * IndexPage 的 UI 状态
  */
-@Immutable
 data class IndexUiState(
     val subscriptionCards: List<SubscriptionCard> = emptyList(),
     val cardValues: Map<String, String> = emptyMap(),
