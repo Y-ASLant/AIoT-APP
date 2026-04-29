@@ -35,6 +35,9 @@ class MqttManager {
     @Volatile
     private var intentionalDisconnect = false
 
+    @Volatile
+    private var disconnectRequested = false
+
     private var username: String? = null
     private var password: String? = null
 
@@ -67,11 +70,12 @@ class MqttManager {
         ioScope.launch {
             try {
                 clientMutex.withLock {
-                    if (isConnected()) {
+                    if (isConnected() && !disconnectRequested) {
                         withContext(Dispatchers.Main) { onConnectComplete() }
                         return@withLock
                     }
 
+                    disconnectRequested = false
                     mqtt3Client?.takeIf { it.state.isConnected }?.disconnect()
                     mqtt5Client?.takeIf { it.state.isConnected }?.disconnect()
 
@@ -175,6 +179,7 @@ class MqttManager {
             ioScope.launch(Dispatchers.Main) {
                 onConnectComplete()
             }
+            restoreTopicSubscriptions()
             if (mqttVersion == 5) {
                 mqtt5Client?.subscribeWith()
                     ?.topicFilter(topic)
@@ -189,6 +194,15 @@ class MqttManager {
                         handleGlobalMessage(publish.topic.toString(), publish.payloadAsBytes)
                     }
                     ?.send()
+            }
+        }
+    }
+
+    private fun restoreTopicSubscriptions() {
+        val subscriptions = subscriptionCallbacks.toMap()
+        subscriptions.forEach { (subscribedTopic, callback) ->
+            if (subscribedTopic != topic) {
+                performSubscribe(subscribedTopic, callback)
             }
         }
     }
@@ -210,6 +224,7 @@ class MqttManager {
     }
 
     fun disconnect() {
+        disconnectRequested = true
         ioScope.launch {
             try {
                 clientMutex.withLock {
@@ -219,9 +234,11 @@ class MqttManager {
 
                     mqtt3Client?.takeIf { it.state.isConnected }?.disconnect()
                     mqtt3Client = null
+                    disconnectRequested = false
                 }
             } catch (e: Exception) {
                 intentionalDisconnect = false
+                disconnectRequested = false
                 Timber.e(e, "Disconnect error")
             }
         }
