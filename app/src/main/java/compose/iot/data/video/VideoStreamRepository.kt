@@ -8,8 +8,10 @@ import compose.iot.ui.theme.page.video.WebSocketClient
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Request.Builder
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -83,9 +85,9 @@ class VideoStreamRepository(
         }
     }
 
-    suspend fun testConnection(url: String): Pair<Boolean, String> = WebSocketClient.testConnection(url)
+    suspend fun testConnection(config: VideoStreamConfig): Pair<Boolean, String> = WebSocketClient.testConnection(config)
 
-    fun stream(url: String): Flow<VideoStreamEvent> =
+    fun stream(config: VideoStreamConfig): Flow<VideoStreamEvent> =
         callbackFlow {
             val client =
                 OkHttpClient.Builder()
@@ -158,7 +160,12 @@ class VideoStreamRepository(
                     }
                 }
 
-            val webSocket = client.newWebSocket(Request.Builder().url(url).build(), listener)
+            val request =
+                Request.Builder()
+                    .url(config.fullWebSocketUrl)
+                    .applyAuth(config.username, config.password)
+                    .build()
+            val webSocket = client.newWebSocket(request, listener)
             emitWaiting()
 
             awaitClose {
@@ -197,4 +204,15 @@ class VideoStreamRepository(
         val imageBytes = Base64.decode(content, Base64.DEFAULT)
         return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
     }
+}
+
+fun Builder.applyAuth(
+    username: String,
+    password: String,
+): Builder {
+    if (username.isBlank()) {
+        return this
+    }
+
+    return header("Authorization", Credentials.basic(username, password))
 }

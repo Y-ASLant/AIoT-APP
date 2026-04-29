@@ -1,9 +1,9 @@
 package compose.iot.ui.viewmodel
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.content.Context
 import compose.iot.R
 import compose.iot.data.video.VideoStreamConfig
 import compose.iot.data.video.VideoStreamEvent
@@ -84,7 +84,7 @@ class VideoStreamViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isTestingConnection = true, isUrlTested = false) }
-            val (success, errorMessage) = repository.testConnection(config.fullWebSocketUrl)
+            val (success, errorMessage) = repository.testConnection(config)
             _uiState.update {
                 it.copy(
                     isTestingConnection = false,
@@ -97,12 +97,12 @@ class VideoStreamViewModel @Inject constructor(
     }
 
     fun startStreaming() {
-        val url = _uiState.value.config.fullWebSocketUrl
+        val config = _uiState.value.config
         stopStreaming()
         _uiState.update { it.copy(isStreamingActive = true, errorMessage = "", frameBitmap = null) }
         streamJob =
             viewModelScope.launch {
-                repository.stream(url).collect { event ->
+                repository.stream(config).collect { event ->
                     when (event) {
                         is VideoStreamEvent.Frame -> {
                             _uiState.update {

@@ -1,5 +1,7 @@
 package compose.iot.ui.theme.page.video
 
+import compose.iot.data.video.VideoStreamConfig
+import compose.iot.data.video.applyAuth
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.*
@@ -17,10 +19,10 @@ class WebSocketClient {
 
         /**
          * 测试WebSocket连接
-         * @param url WebSocket URL
+         * @param config WebSocket 配置
          * @return 包含连接结果和错误信息的Pair
          */
-        suspend fun testConnection(url: String): Pair<Boolean, String> {
+        suspend fun testConnection(config: VideoStreamConfig): Pair<Boolean, String> {
             return try {
                 val client =
                     OkHttpClient.Builder()
@@ -31,7 +33,8 @@ class WebSocketClient {
 
                 val request =
                     Request.Builder()
-                        .url(url)
+                        .url(config.fullWebSocketUrl)
+                        .applyAuth(config.username, config.password)
                         .build()
 
                 // 使用协程包装WebSocket连接过程
@@ -46,7 +49,7 @@ class WebSocketClient {
                                             webSocket: WebSocket,
                                             response: Response,
                                         ) {
-                                            Timber.d("WebSocket连接成功: $url")
+                                            Timber.d("WebSocket连接成功: %s", config.fullWebSocketUrl)
                                             webSocket.close(1000, "测试完成")
                                             continuation.resume(Pair(true, ""))
                                         }

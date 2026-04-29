@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
                             MainScaffold(navController = navController)
                         }
                         composable<AppDestination.Login> {
-                            LoginPage(navController, mqttManager, prefs)
+                            LoginPage(navController)
                         }
                         composable<AppDestination.HomeAssistant> {
                             HomeAssistantPage(navController)

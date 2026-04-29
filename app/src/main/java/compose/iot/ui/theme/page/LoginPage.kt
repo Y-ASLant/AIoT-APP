@@ -1,76 +1,84 @@
 package compose.iot.ui.theme.page
 
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.AlertTriangle
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.Lock
+import compose.icons.tablericons.MapPin
+import compose.icons.tablericons.MoodSmile
+import compose.icons.tablericons.Plus
+import compose.icons.tablericons.User
+import compose.icons.tablericons.X
 import compose.iot.R
-import compose.iot.data.preferences.PreferencesManager
-import compose.iot.mqtt.MqttManager
+import compose.iot.ui.components.AppScaffold
+import compose.iot.ui.viewmodel.LoginEffect
+import compose.iot.ui.viewmodel.LoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginPage(
     navController: NavController? = null,
-    mqttManager: MqttManager,
-    preferencesManager: PreferencesManager,
+    viewModel: LoginViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
-    var isConnected by remember { mutableStateOf(mqttManager.isConnected()) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    var serverIp by remember { mutableStateOf(preferencesManager.mqttServerIp) }
-    var serverPort by remember { mutableStateOf(preferencesManager.mqttServerPort) }
-    var clientId by remember { mutableStateOf(preferencesManager.mqttClientId) }
-    var autoConnect by remember { mutableStateOf(preferencesManager.mqttAutoConnect) }
-    var mqttVersion by remember { mutableStateOf(preferencesManager.mqttVersion) }
-    var username by remember { mutableStateOf(preferencesManager.mqttUsername ?: "ASLant") }
-    var password by remember { mutableStateOf(preferencesManager.mqttPassword ?: "") }
-
-    fun connectToMqtt() {
-        preferencesManager.mqttServerIp = serverIp
-        preferencesManager.mqttServerPort = serverPort
-        preferencesManager.mqttClientId = clientId
-        preferencesManager.mqttUsername = username
-        preferencesManager.mqttPassword = password
-        preferencesManager.mqttVersion = mqttVersion
-        preferencesManager.mqttAutoConnect = autoConnect
-        val serverUri = "tcp://$serverIp:$serverPort"
-        mqttManager.setMqttVersion(mqttVersion)
-        mqttManager.setServerUri(serverUri)
-        mqttManager.setClientId(clientId)
-        mqttManager.setUsername(username)
-        mqttManager.setPassword(password)
-        mqttManager.connect(
-            onConnectComplete = {
-                isConnected = true
-                Toast.makeText(context, context.getString(R.string.server_connection_success), Toast.LENGTH_SHORT).show()
-            },
-            onError = { error ->
-                isConnected = false
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-            },
-        )
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is LoginEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+            }
+        }
     }
 
-    compose.iot.ui.components.AppScaffold(
+    AppScaffold(
         title = stringResource(R.string.mqtt_connection_settings),
         navController = navController,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { _ ->
         Column(
             modifier =
@@ -83,14 +91,13 @@ fun LoginPage(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 动态颜色变化的状态卡片
             val statusColor by animateColorAsState(
-                targetValue = if (isConnected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                targetValue = if (uiState.isConnected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
                 animationSpec = tween(500),
                 label = "statusColor",
             )
             val onStatusColor by animateColorAsState(
-                targetValue = if (isConnected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                targetValue = if (uiState.isConnected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
                 animationSpec = tween(500),
                 label = "onStatusColor",
             )
@@ -110,7 +117,7 @@ fun LoginPage(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = if (isConnected) TablerIcons.CircleCheck else TablerIcons.AlertTriangle,
+                        imageVector = if (uiState.isConnected) TablerIcons.CircleCheck else TablerIcons.AlertTriangle,
                         contentDescription = null,
                         tint = onStatusColor,
                         modifier = Modifier.size(48.dp),
@@ -118,14 +125,14 @@ fun LoginPage(
                     Spacer(modifier = Modifier.width(20.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isConnected) stringResource(R.string.server_connected) else stringResource(R.string.server_not_connected),
+                            text = if (uiState.isConnected) stringResource(R.string.server_connected) else stringResource(R.string.server_not_connected),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = onStatusColor,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (isConnected) "$serverIp:$serverPort" else stringResource(R.string.check_network_or_config),
+                            text = if (uiState.isConnected) "${uiState.serverIp}:${uiState.serverPort}" else stringResource(R.string.check_network_or_config),
                             style = MaterialTheme.typography.bodyMedium,
                             color = onStatusColor.copy(alpha = 0.8f),
                         )
@@ -133,13 +140,15 @@ fun LoginPage(
                 }
             }
 
-            // MQTT配置区域标题
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp, top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -153,15 +162,19 @@ fun LoginPage(
                         modifier = Modifier.height(32.dp),
                     ) {
                         SegmentedButton(
-                            selected = mqttVersion == 3,
-                            onClick = { mqttVersion = 3 },
+                            selected = uiState.mqttVersion == 3,
+                            onClick = { viewModel.updateMqttVersion(3) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                        ) { Text(stringResource(R.string.mqtt_version_311), style = MaterialTheme.typography.labelMedium) }
+                        ) {
+                            Text(stringResource(R.string.mqtt_version_311), style = MaterialTheme.typography.labelMedium)
+                        }
                         SegmentedButton(
-                            selected = mqttVersion == 5,
-                            onClick = { mqttVersion = 5 },
+                            selected = uiState.mqttVersion == 5,
+                            onClick = { viewModel.updateMqttVersion(5) },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        ) { Text(stringResource(R.string.mqtt_version_50), style = MaterialTheme.typography.labelMedium) }
+                        ) {
+                            Text(stringResource(R.string.mqtt_version_50), style = MaterialTheme.typography.labelMedium)
+                        }
                     }
                 }
 
@@ -170,8 +183,8 @@ fun LoginPage(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     OutlinedTextField(
-                        value = serverIp,
-                        onValueChange = { serverIp = it },
+                        value = uiState.serverIp,
+                        onValueChange = viewModel::updateServerIp,
                         label = { Text(stringResource(R.string.server_address)) },
                         leadingIcon = { Icon(TablerIcons.MapPin, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
@@ -180,8 +193,8 @@ fun LoginPage(
                         shape = MaterialTheme.shapes.small,
                     )
                     OutlinedTextField(
-                        value = serverPort,
-                        onValueChange = { serverPort = it },
+                        value = uiState.serverPort,
+                        onValueChange = viewModel::updateServerPort,
                         label = { Text(stringResource(R.string.port)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = androidx.compose.ui.text.input.ImeAction.Next),
                         modifier = Modifier.weight(0.3f),
@@ -191,8 +204,8 @@ fun LoginPage(
                 }
 
                 OutlinedTextField(
-                    value = clientId,
-                    onValueChange = { clientId = it },
+                    value = uiState.clientId,
+                    onValueChange = viewModel::updateClientId,
                     label = { Text(stringResource(R.string.client_id)) },
                     leadingIcon = { Icon(TablerIcons.MoodSmile, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
@@ -210,8 +223,8 @@ fun LoginPage(
                 )
 
                 OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
+                    value = uiState.username,
+                    onValueChange = viewModel::updateUsername,
                     label = { Text(stringResource(R.string.username)) },
                     leadingIcon = { Icon(TablerIcons.User, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Next),
@@ -221,8 +234,8 @@ fun LoginPage(
                 )
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
+                    value = uiState.password,
+                    onValueChange = viewModel::updatePassword,
                     label = { Text(stringResource(R.string.password)) },
                     leadingIcon = { Icon(TablerIcons.Lock, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
@@ -234,7 +247,6 @@ fun LoginPage(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 操作区
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -253,11 +265,8 @@ fun LoginPage(
                             Text(stringResource(R.string.background_auto_connect_description), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(
-                            checked = autoConnect,
-                            onCheckedChange = {
-                                autoConnect = it
-                                preferencesManager.mqttAutoConnect = it
-                            },
+                            checked = uiState.autoConnect,
+                            onCheckedChange = viewModel::updateAutoConnect,
                         )
                     }
                 }
@@ -265,34 +274,23 @@ fun LoginPage(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = {
-                        if (!isConnected) {
-                            connectToMqtt()
-                        } else {
-                            mqttManager.disconnect()
-                            isConnected = false
-                            Toast.makeText(context, context.getString(R.string.mqtt_disconnected), Toast.LENGTH_SHORT).show()
-                        }
-                    },
+                    onClick = viewModel::connectOrDisconnect,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .height(56.dp),
                     shape = MaterialTheme.shapes.extraLarge,
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = if (isConnected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (uiState.isConnected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 0.dp),
                 ) {
                     Icon(
-                        imageVector = if (isConnected) TablerIcons.X else TablerIcons.Plus,
+                        imageVector = if (uiState.isConnected) TablerIcons.X else TablerIcons.Plus,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = if (isConnected) stringResource(R.string.disconnect_current_connection) else stringResource(R.string.establish_secure_connection),
+                        text = if (uiState.isConnected) stringResource(R.string.disconnect_current_connection) else stringResource(R.string.establish_secure_connection),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
