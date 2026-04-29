@@ -9,7 +9,7 @@ import compose.iot.mqtt.SubscriptionCard
 
 @Database(
     entities = [SubscriptionCard::class, SensorHistoryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

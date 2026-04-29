@@ -13,6 +13,13 @@ enum class ServerType {
     HomeAssistant, // Home Assistant 服务器
 }
 
+enum class CardSize {
+    S1x1, // 单列单行
+    S1x2, // 单列双行
+    S2x1, // 双列单行
+    S2x2, // 双列双行
+}
+
 @Immutable
 @Entity(tableName = "subscription_cards", primaryKeys = ["topic", "jsonParam"])
 data class SubscriptionCard(
@@ -23,6 +30,8 @@ data class SubscriptionCard(
     val unitSuffix: String = "",
     // 卡片样式
     val cardStyle: CardStyle = CardStyle.FILLED,
+    // 卡片尺寸
+    val cardSize: CardSize = CardSize.S1x1,
     // 设备类型
     val deviceType: DeviceType = DeviceType.SENSOR,
     // 服务器类型

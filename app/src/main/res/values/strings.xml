@@ -46,6 +46,11 @@
     <string name="button_value">按钮值</string>
     <string name="button_value_hint">按钮点击时发送的值</string>
     <string name="card_style">卡片样式</string>
+    <string name="card_size">卡片大小</string>
+    <string name="card_size_1x1">1×1</string>
+    <string name="card_size_1x2">1×2</string>
+    <string name="card_size_2x1">2×1</string>
+    <string name="card_size_2x2">2×2</string>
     <string name="card_style_highlight">高亮</string>
     <string name="card_style_minimal">简约</string>
     <string name="card_style_filled">填充</string>

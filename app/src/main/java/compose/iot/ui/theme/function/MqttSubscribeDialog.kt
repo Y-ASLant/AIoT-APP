@@ -32,6 +32,7 @@ fun MqttSubscribeDialog(
     var jsonParam by remember(editingCard) { mutableStateOf(editingCard?.jsonParam ?: "") }
     var unitSuffix by remember(editingCard) { mutableStateOf(editingCard?.unitSuffix ?: "") }
     var cardStyle by remember(editingCard) { mutableStateOf(editingCard?.cardStyle ?: CardStyle.FILLED) }
+    var cardSize by remember(editingCard) { mutableStateOf(editingCard?.cardSize ?: CardSize.S1x1) }
     var deviceType by remember(editingCard) { mutableStateOf(editingCard?.deviceType ?: DeviceType.SENSOR) }
     var serverType by remember(editingCard) { mutableStateOf(editingCard?.serverType ?: ServerType.EMQX) }
     var isButtonStyle by remember(editingCard) { mutableStateOf(editingCard?.isButtonStyle == true) }
@@ -281,6 +282,29 @@ fun MqttSubscribeDialog(
                     }
                 }
 
+                Text(stringResource(R.string.card_size), style = MaterialTheme.typography.labelMedium)
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    CardSize.entries.forEachIndexed { index, size ->
+                        SegmentedButton(
+                            selected = cardSize == size,
+                            onClick = { cardSize = size },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = CardSize.entries.size),
+                            colors = transparentSegmentedColors,
+                        ) {
+                            Text(
+                                when (size) {
+                                    CardSize.S1x1 -> stringResource(R.string.card_size_1x1)
+                                    CardSize.S1x2 -> stringResource(R.string.card_size_1x2)
+                                    CardSize.S2x1 -> stringResource(R.string.card_size_2x1)
+                                    CardSize.S2x2 -> stringResource(R.string.card_size_2x2)
+                                },
+                            )
+                        }
+                    }
+                }
+
                 // 删除按钮（仅在编辑模式下显示）
                 if (editingCard != null && onDelete != null) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -315,6 +339,7 @@ fun MqttSubscribeDialog(
                                 jsonParam = jsonParam,
                                 unitSuffix = unitSuffix,
                                 cardStyle = cardStyle,
+                                cardSize = cardSize,
                                 deviceType = deviceType,
                                 serverType = serverType,
                                 isButtonStyle = if (deviceType == DeviceType.ACTUATOR) isButtonStyle else false,

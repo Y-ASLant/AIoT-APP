@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Plus
 import compose.iot.R
+import compose.iot.mqtt.CardSize
 import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
 import compose.iot.mqtt.ServerType
@@ -222,10 +223,9 @@ fun IndexPage(viewModel: IndexViewModel = hiltViewModel()) {
                             items = filteredCards,
                             key = { card -> card.cardId },
                             span = { card ->
-                                if (card.deviceType == DeviceType.ACTUATOR) {
-                                    StaggeredGridItemSpan.FullLine
-                                } else {
-                                    StaggeredGridItemSpan.SingleLane
+                                when (card.cardSize) {
+                                    CardSize.S1x1, CardSize.S1x2 -> StaggeredGridItemSpan.SingleLane
+                                    CardSize.S2x1, CardSize.S2x2 -> StaggeredGridItemSpan.FullLine
                                 }
                             },
                         ) { card ->
@@ -336,7 +336,7 @@ private fun DeviceCardItem(
     val cardModifier =
         Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 120.dp)
+            .defaultMinSize(minHeight = card.cardSize.minHeight())
             .clip(MaterialTheme.shapes.small)
             .combinedClickable(
                 onClick = {
@@ -385,6 +385,12 @@ private fun DeviceCardItem(
             )
     }
 }
+
+private fun CardSize.minHeight() =
+    when (this) {
+        CardSize.S1x1, CardSize.S2x1 -> 120.dp
+        CardSize.S1x2, CardSize.S2x2 -> 248.dp
+    }
 
 @Composable
 private fun CardHeader(card: SubscriptionCard) {

@@ -1,6 +1,7 @@
 package compose.iot.data.room
 
 import androidx.room.TypeConverter
+import compose.iot.mqtt.CardSize
 import compose.iot.mqtt.CardStyle
 import compose.iot.mqtt.DeviceType
 import compose.iot.mqtt.ServerType
@@ -23,4 +24,10 @@ class Converters {
 
     @TypeConverter
     fun toCardStyle(value: String): CardStyle = enumValueOf(value)
+
+    @TypeConverter
+    fun fromCardSize(value: CardSize): String = value.name
+
+    @TypeConverter
+    fun toCardSize(value: String): CardSize = enumValueOf(value)
 }
