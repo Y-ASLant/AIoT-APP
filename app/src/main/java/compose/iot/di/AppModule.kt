@@ -30,7 +30,7 @@ object AppModule {
             AppDatabase::class.java,
             "aiot_app_database",
         )
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .build()
 
     @Provides

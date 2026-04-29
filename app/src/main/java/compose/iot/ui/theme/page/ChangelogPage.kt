@@ -24,6 +24,11 @@ fun ChangelogPage() {
     val changelogItems =
         listOf(
             ChangelogItem(
+                version = "1.5.0",
+                date = "2026-04-12",
+                changes = stringArrayResource(R.array.changelog_1_5_0).toList(),
+            ),
+            ChangelogItem(
                 version = "1.2.1",
                 date = "2025-05-13",
                 changes = stringArrayResource(R.array.changelog_1_2_1).toList(),

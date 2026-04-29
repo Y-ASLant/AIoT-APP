@@ -231,6 +231,14 @@
 
     <string name="temperature_unit_celsius">°C</string>
 
+    <string-array name="changelog_1_5_0">
+        <item>全面重构</item>
+        <item>登录页改为 ViewModel + UiState + Effect 状态驱动结构</item>
+        <item>新增设备卡片大小调节，支持 1×1、1×2、2×1、2×2</item>
+        <item>数据库升级改为显式迁移，避免版本更新时静默清空卡片数据</item>
+        <item>修复首页启动时设备类型切换闪动，进入后按上次选择直接定位页面</item>
+        <item>补充多项稳定性修复与交互细节优化</item>
+    </string-array>
     <string-array name="changelog_1_2_1">
         <item>增加检查更新功能</item>
         <item>修复滑实时控制EMQX无效问题</item>
