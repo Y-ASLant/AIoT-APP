@@ -3,6 +3,7 @@ package compose.iot
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
@@ -28,12 +29,15 @@ import compose.iot.ui.theme.page.HomeAssistantPage
 import compose.iot.ui.theme.page.LoginPage
 import compose.iot.ui.theme.page.video.VideoStreamPage
 import compose.iot.ui.theme.ui.theme.AIOT_ComposeTheme
+import compose.iot.ui.viewmodel.IndexViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val indexViewModel: IndexViewModel by viewModels()
+
     @Inject
     lateinit var mqttManager: MqttManager
 
@@ -42,8 +46,11 @@ class MainActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setKeepOnScreenCondition {
+            !indexViewModel.uiState.value.isInitialDataReady
+        }
 
         if (prefs.appKeepAlive) {
             MqttForegroundService.start(this)

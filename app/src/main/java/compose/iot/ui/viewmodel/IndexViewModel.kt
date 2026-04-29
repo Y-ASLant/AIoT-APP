@@ -49,7 +49,13 @@ class IndexViewModel @Inject constructor(
 
     // region ── State ──
 
-    private val _uiState = MutableStateFlow(IndexUiState())
+    private val _uiState =
+        MutableStateFlow(
+            IndexUiState(
+                selectedDeviceType = prefsManager.selectedDeviceType,
+                continuousSliderMode = prefsManager.sliderContinuousUpdate,
+            ),
+        )
     val uiState: StateFlow<IndexUiState> = _uiState.asStateFlow()
 
     private val _events = Channel<UiEvent>(Channel.BUFFERED)
@@ -93,6 +99,8 @@ class IndexViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            syncCards(subscriptionCardDao.getAllCards())
+            _uiState.update { it.copy(isInitialDataReady = true) }
             subscriptionCardDao.getAllCardsStream().collectLatest(::syncCards)
         }
     }

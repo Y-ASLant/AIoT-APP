@@ -12,6 +12,7 @@ data class IndexUiState(
     val cardValues: Map<String, String> = emptyMap(),
     val selectedDeviceType: DeviceType = DeviceType.SENSOR,
     val continuousSliderMode: Boolean = false,
+    val isInitialDataReady: Boolean = false,
     val loadingCards: Set<String> = emptySet(),
     val showSubscribeDialog: Boolean = false,
     val editingCard: SubscriptionCard? = null,
