@@ -105,10 +105,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if (!prefs.appKeepAlive) {
-            mqttManager.release()
-        }
-    }
 }

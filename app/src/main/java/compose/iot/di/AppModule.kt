@@ -45,13 +45,11 @@ object AppModule {
         preferencesManager: PreferencesManager,
     ): MqttManager =
         MqttManager().apply {
-            if (preferencesManager.mqttAutoConnect) {
-                setMqttVersion(preferencesManager.mqttVersion)
-                setServerUri("tcp://${preferencesManager.mqttServerIp}:${preferencesManager.mqttServerPort}")
-                setClientId(preferencesManager.mqttClientId)
-                setUsername(preferencesManager.mqttUsername)
-                setPassword(preferencesManager.mqttPassword)
-            }
+            setMqttVersion(preferencesManager.mqttVersion)
+            setServerUri("tcp://${preferencesManager.mqttServerIp}:${preferencesManager.mqttServerPort}")
+            setClientId(preferencesManager.mqttClientId)
+            setUsername(preferencesManager.mqttUsername)
+            setPassword(preferencesManager.mqttPassword)
         }
 
     @Provides
