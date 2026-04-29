@@ -156,6 +156,13 @@ fun IndexPage(viewModel: IndexViewModel = hiltViewModel()) {
                     pageCount = { 2 },
                 )
 
+            LaunchedEffect(uiState.selectedDeviceType) {
+                val targetPage = if (uiState.selectedDeviceType == DeviceType.SENSOR) 0 else 1
+                if (pagerState.currentPage != targetPage) {
+                    pagerState.scrollToPage(targetPage)
+                }
+            }
+
             LaunchedEffect(pagerState.currentPage) {
                 val targetType = if (pagerState.currentPage == 0) DeviceType.SENSOR else DeviceType.ACTUATOR
                 if (uiState.selectedDeviceType != targetType) {

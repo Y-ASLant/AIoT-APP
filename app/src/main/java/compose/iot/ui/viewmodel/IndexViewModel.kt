@@ -55,7 +55,8 @@ class IndexViewModel @Inject constructor(
     private val _events = Channel<UiEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private var lastToastTime = 0L
+    private var lastSnackbarTime = 0L
+    private var lastSnackbarMessage: String? = null
     private var topicSubscriptionCount = mapOf<String, Int>()
 
     fun isMqttConnected(): Boolean = mqttManager.isConnected()
@@ -513,15 +514,27 @@ class IndexViewModel @Inject constructor(
     // region ── Snackbar 工具 ──
 
     private fun emitSnackbar(message: String) {
+        if (shouldSuppressSnackbar(message)) {
+            return
+        }
         _events.trySend(UiEvent.ShowSnackbar(message))
     }
 
     private fun emitThrottledSnackbar(message: String) {
-        val now = System.currentTimeMillis()
-        if (now - lastToastTime > 1000) {
-            _events.trySend(UiEvent.ShowSnackbar(message))
-            lastToastTime = now
+        if (shouldSuppressSnackbar(message)) {
+            return
         }
+        _events.trySend(UiEvent.ShowSnackbar(message))
+    }
+
+    private fun shouldSuppressSnackbar(message: String): Boolean {
+        val now = System.currentTimeMillis()
+        val shouldSuppress = lastSnackbarMessage == message && now - lastSnackbarTime <= 1000
+        if (!shouldSuppress) {
+            lastSnackbarMessage = message
+            lastSnackbarTime = now
+        }
+        return shouldSuppress
     }
 
     private fun buildCardId(card: SubscriptionCard): String = "${card.topic}:${card.jsonParam}"
