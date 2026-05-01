@@ -15,8 +15,8 @@ enum class ServerType {
 
 enum class CardSize {
     S1x1, // 单列单行
-    S1x2, // 单列双行
-    S2x1, // 双列单行
+    S1x2, // 单行双列
+    S2x1, // 双行单列
     S2x2, // 双列双行
 }
 

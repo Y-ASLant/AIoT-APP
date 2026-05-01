@@ -224,8 +224,8 @@ fun IndexPage(viewModel: IndexViewModel = hiltViewModel()) {
                             key = { card -> card.cardId },
                             span = { card ->
                                 when (card.cardSize) {
-                                    CardSize.S1x1, CardSize.S1x2 -> StaggeredGridItemSpan.SingleLane
-                                    CardSize.S2x1, CardSize.S2x2 -> StaggeredGridItemSpan.FullLine
+                                    CardSize.S1x1, CardSize.S2x1 -> StaggeredGridItemSpan.SingleLane
+                                    CardSize.S1x2, CardSize.S2x2 -> StaggeredGridItemSpan.FullLine
                                 }
                             },
                         ) { card ->
@@ -388,8 +388,8 @@ private fun DeviceCardItem(
 
 private fun CardSize.minHeight() =
     when (this) {
-        CardSize.S1x1, CardSize.S2x1 -> 120.dp
-        CardSize.S1x2, CardSize.S2x2 -> 248.dp
+        CardSize.S1x1, CardSize.S1x2 -> 120.dp
+        CardSize.S2x1, CardSize.S2x2 -> 248.dp
     }
 
 @Composable
