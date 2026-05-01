@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import compose.iot.mqtt.SubscriptionCard
 import kotlinx.coroutines.flow.Flow
 
@@ -25,6 +26,9 @@ interface SubscriptionCardDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCards(cards: List<SubscriptionCard>)
 
+    @Query("DELETE FROM subscription_cards")
+    suspend fun deleteAllCards()
+
     @Delete
     suspend fun deleteCard(card: SubscriptionCard)
 
@@ -33,4 +37,10 @@ interface SubscriptionCardDao {
         topic: String,
         jsonParam: String,
     )
+
+    @Transaction
+    suspend fun replaceAllCards(cards: List<SubscriptionCard>) {
+        deleteAllCards()
+        insertCards(cards)
+    }
 }
