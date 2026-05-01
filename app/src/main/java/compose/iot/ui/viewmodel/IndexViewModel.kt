@@ -265,6 +265,7 @@ class IndexViewModel @Inject constructor(
         value: Float,
     ) {
         val cid = buildCardId(card)
+        val shouldNotifySuccess = !_uiState.value.continuousSliderMode
         when (card.serverType) {
             ServerType.EMQX -> {
                 val json = JSONObject().apply { put(card.jsonParam, value) }
@@ -273,7 +274,9 @@ class IndexViewModel @Inject constructor(
                     message = json.toString(),
                     onComplete = {
                         prefsManager.saveSliderState(cid, value)
-                        emitThrottledSnackbar(context.getString(R.string.snackbar_send_success))
+                        if (shouldNotifySuccess) {
+                            emitSnackbar(context.getString(R.string.snackbar_send_success))
+                        }
                     },
                     onError = { error -> emitThrottledSnackbar(context.getString(R.string.snackbar_send_failed, error)) },
                 )
@@ -287,7 +290,9 @@ class IndexViewModel @Inject constructor(
                     data = buildSliderData(entityId, value),
                     onComplete = {
                         prefsManager.saveSliderState(cid, value)
-                        emitThrottledSnackbar(context.getString(R.string.snackbar_send_success))
+                        if (shouldNotifySuccess) {
+                            emitSnackbar(context.getString(R.string.snackbar_send_success))
+                        }
                     },
                     onError = { error -> emitThrottledSnackbar(context.getString(R.string.snackbar_send_failed, error)) },
                 )
